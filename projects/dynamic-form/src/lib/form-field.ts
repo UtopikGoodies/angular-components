@@ -1,3 +1,5 @@
+// prettier-ignore
+
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, Input } from '@angular/core';
 import {
@@ -154,11 +156,7 @@ export class DynamicFormFieldSelect implements OnInit {
 @Component({
   selector: 'dyn-form-field',
   standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    DynamicFormFieldInput,
-    DynamicFormFieldSelect,
-  ],
+  imports: [ReactiveFormsModule, DynamicFormFieldInput, DynamicFormFieldSelect],
   template: `
     <div class="formfield">
       @switch (formField.formFieldType) { @case ('FormFieldInput') {
@@ -203,8 +201,8 @@ export class DynamicFormfield implements OnInit {
         <mat-card-subtitle>{{ formfieldObject.subtitle }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content class="card-content">
-        @if(isShowFormFieldShowen){ @for (formField of
-        formfieldObject.formFields; track formField){
+        @if(isShowFormFieldShowen) { @for (formField of
+        formfieldObject.formFields; track formField) {
         <div>
           <dyn-form-field
             [dynFormField]="formField"
@@ -214,7 +212,7 @@ export class DynamicFormfield implements OnInit {
         } }
       </mat-card-content>
       <mat-card-actions align="end">
-        @if(isShowFormFieldShowen){
+        @if(isShowFormFieldShowen) {
         <button mat-icon-button (click)="toggleShowFormField()">
           <mat-icon>keyboard_arrow_up</mat-icon>
         </button>
@@ -246,7 +244,10 @@ export class DynamicFormFieldObject implements OnInit {
   isShowFormFieldShowen!: boolean;
 
   ngOnInit(): void {
-    this.isShowFormFieldShowen = this.formfieldObject.required || this.expended;
+    this.isShowFormFieldShowen =
+      this.formfieldObject.required ||
+      this.expended ||
+      this.formfieldObject.formFields.length > 0;
     this.setFormGroupState();
   }
 
@@ -284,25 +285,31 @@ export class DynamicFormFieldObject implements OnInit {
         <mat-card-subtitle>{{ formFieldArray.subtitle }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content class="card-content">
-        @if(isShowFormFieldShowen){ @for (formFieldControl of
-        formArray.controls; track formFieldControl){ @switch
-        (formFieldArray.formField.formFieldType) { @case('FormFieldArray') {
+      @if(isShowFormFieldShowen) { 
+        @for (formField of formFieldArray.formFields; track formField; let index = $index) { 
+          @switch(formField.formFieldType) { 
+            @case('FormFieldArray') {
         <dyn-form-field-array
-          [dynFormField]="formFieldArray.formField"
-          [dynFormGroup]="formArray.controls[0]"
+          [dynFormField]="formField"
+          [dynFormGroup]="formArray.controls[index]"
         ></dyn-form-field-array>
-        } @case ('FormfieldObject') {
+          } 
+          @case ('FormfieldObject') {
         <dyn-form-field-object
-          [dynFormField]="formFieldArray.formField"
-          [dynFormGroup]="formArray.controls[0]"
+          [dynFormField]="formField"
+          [dynFormGroup]="formArray.controls[index]"
           [expended]="isShowFormFieldShowen"
         ></dyn-form-field-object>
-        } @default {
+          } 
+          @default {
         <dyn-form-field
-          [dynFormField]="formFieldArray.formField"
-          [dynFormControl]="formArray.controls[0]"
+          [dynFormField]="formField"
+          [dynFormControl]="formArray.controls[index]"
         ></dyn-form-field>
-        } } } }
+            } 
+          } 
+        } 
+      }
       </mat-card-content>
       <mat-card-actions align="end">
         <button mat-icon-button (click)="removeFormField()">
@@ -337,7 +344,7 @@ export class DynamicFormFieldArray implements OnInit {
   isShowFormFieldShowen!: boolean;
 
   ngOnInit() {
-    this.isShowFormFieldShowen = this.formFieldArray.formField.required;
+    this.isShowFormFieldShowen = this.formFieldArray.formFieldModel.required || this.formFieldArray.formFields.length > 0;
     this.setFormGroupState();
   }
 
@@ -356,7 +363,7 @@ export class DynamicFormFieldArray implements OnInit {
       this.formArray.removeAt(this.formArray.length - 1);
       this.isShowFormFieldShowen = true;
     } else {
-      this.isShowFormFieldShowen = this.formFieldArray.formField.required;
+      this.isShowFormFieldShowen = this.formFieldArray.formFieldModel.required;
     }
   }
 

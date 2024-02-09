@@ -1,4 +1,3 @@
-
 export abstract class AbstractFormField {
   abstract formFieldType: string;
   name!: string;
@@ -11,24 +10,29 @@ export abstract class FormField<T> extends AbstractFormField {
   hint: string = '';
   icon: string = '';
   placeholder: string = '';
-  value!: T
+  value!: T;
 }
 
 export class FormFieldArray extends AbstractFormField {
   formFieldType = 'FormFieldArray';
   subtitle!: string;
-  formField!: AbstractFormField;
+  formFieldModel!: AbstractFormField;
+  formFields: AbstractFormField[] = [];
   uniqueValue: boolean = false;
 
   constructor(data: {
     name: string;
     title: string;
     subtitle?: string;
-    formField: AbstractFormField;
+    formFieldModel?: AbstractFormField;
+    formFields?: AbstractFormField[];
     uniqueValue?: boolean;
   }) {
     super();
     Object.assign(this, data);
+    if (this.formFields.length == 0) {
+      this.formFields.push(this.formFieldModel);
+    }
   }
 }
 
