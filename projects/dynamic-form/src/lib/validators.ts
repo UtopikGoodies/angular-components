@@ -1,94 +1,76 @@
 import {
   AbstractControl,
   FormArray,
+  FormControl,
   FormGroup,
   ValidationErrors,
   ValidatorFn,
 } from '@angular/forms';
 
-export function duplicateValueValidator(controlName: string): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    const formGroup = control.parent;
-    if (!formGroup) {
-      return null; // No parent form group
+export function distinctValidator(): ValidatorFn {
+  return (control: AbstractControl): { [key: string]: any } | null => {
+    if (control instanceof FormArray) {
+      const values: any[] = [];
+      const duplicateIndices: Set<number> = new Set(); // Track indices of controls with duplicate values
+      let duplicatesFound = false; // Flag to track if duplicates are found
+
+      control.controls.forEach(
+        (itemControl: AbstractControl, index: number) => {
+          let valueToCheck;
+          if (itemControl instanceof FormGroup) {
+            // Get the value of the nested control
+            valueToCheck = Object.values(itemControl.controls)
+              .map((ctrl) => ctrl.value)
+              .join('');
+          } else if (itemControl instanceof FormControl) {
+            valueToCheck = itemControl.value;
+          } else if (itemControl instanceof FormArray) {
+            valueToCheck = collectFormArrayValues(itemControl).join('');
+          }
+
+          // Skip validation if the value to check is empty
+          if (!valueToCheck) {
+            return;
+          }
+
+          if (values.includes(valueToCheck)) {
+            duplicateIndices.add(index);
+            duplicateIndices.add(values.indexOf(valueToCheck));
+            duplicatesFound = true; // Set flag to true if duplicates are found
+          }
+          values.push(valueToCheck);
+        }
+      );
+
+      // Set error on controls with duplicate values
+      if (duplicatesFound) {
+        const errors = { duplicateValues: true };
+        duplicateIndices.forEach((idx) => {
+          control.controls[idx].setErrors(errors);
+        });
+        return errors;
+      } else {
+        return null; // Return null if no duplicates found
+      }
     }
-
-    const formGroupControls = Object.keys(formGroup.controls);
-    const currentValue = control.value;
-
-    if (!currentValue) {
-      return null;
-    }
-
-    // Check if there are any controls with the same value
-    const isDuplicate = formGroupControls
-      .filter((name) => name !== controlName) // Exclude the current control
-      .some((name) => formGroup.get(name)?.value === currentValue);
-
-    // If a duplicate value is found, set the custom error
-    if (isDuplicate) {
-      return { duplicateValue: true };
-    }
-
-    return null; // No error
+    return null; // Return null if control is not a FormArray
   };
 }
 
-export function duplicateValueValidatorInArray(): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    if (!control.parent) {
-      return null; // No parent FormArray
+function collectFormArrayValues(
+  formArray: FormArray<any>,
+  values: any[] = []
+): any[] {
+  formArray.controls.forEach((itemControl: AbstractControl) => {
+    if (itemControl instanceof FormGroup) {
+      Object.values(itemControl.controls).forEach((ctrl) => {
+        values.push(ctrl.value);
+      });
+    } else if (itemControl instanceof FormControl) {
+      values.push(itemControl.value);
+    } else if (itemControl instanceof FormArray) {
+      values = collectFormArrayValues(itemControl, values);
     }
-
-    const formArray: FormArray = control.parent as FormArray;
-    const controls = formArray.controls;
-    const currentValue = control.value;
-
-    if (!currentValue) {
-      return null; // If current value is falsy, no need to check for duplicates
-    }
-
-    // Count occurrences of the current value in the array
-    const duplicateCount = controls.filter(
-      (ctrl) => ctrl.value === currentValue
-    ).length;
-
-    // If there's more than one occurrence, it means there's a duplicate
-    if (duplicateCount > 1) {
-      return { duplicateValue: true };
-    }
-
-    return null; // No duplicates found, no error
-  };
-}
-
-// ChatGPT
-// export function distinctValuesValidator(): ValidatorFn {
-//   return (control: AbstractControl): ValidationErrors | null => {
-//     if (!(control instanceof FormGroup)) {
-//       return null; // If not a FormGroup, don't perform validation
-//     }
-
-//     const group = control as FormGroup; // Cast control to FormGroup
-//     const controlValues = Object.values(group.value);
-//     const distinctValues = new Set(controlValues);
-//     if (controlValues.length !== distinctValues.size) {
-//       return { distinctValues: true }; // Validation error if not all values are distinct
-//     }
-//     return null; // No error
-//   };
-// }
-
-// Gemini
-export function distinctValuesValidator(): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    const controlValues = control.value;
-    const uniqueValues = new Set(controlValues);
-
-    if (controlValues.length !== uniqueValues.size) {
-      return { distinctValues: true }; // Return an error object
-    }
-
-    return null; // No errors
-  };
+  });
+  return values;
 }

@@ -1,5 +1,3 @@
-/* eslint-disable prettier/prettier */
-
 import {
   AfterViewInit,
   Component,
@@ -14,12 +12,16 @@ import {
   FormField,
   FormFieldArray,
   FormfieldObject as FormFieldObject,
+  FormfieldObject,
 } from './models';
 import {
+  AbstractControl,
   FormArray,
   FormBuilder,
   FormControl,
+  FormControlStatus,
   FormGroup,
+  ValidatorFn,
   Validators,
 } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -30,10 +32,7 @@ import {
 } from './form-field';
 import { DynamicFormActions } from './form-actions';
 import { MatButtonModule } from '@angular/material/button';
-import {
-  distinctValuesValidator,
-  duplicateValueValidatorInArray,
-} from './validators';
+import { distinctValidator } from './validators';
 
 @Component({
   selector: 'dyn-form',
@@ -89,89 +88,64 @@ import {
 export class DynamicForm implements AfterViewInit {
   @Input() dynFormFields!: AbstractFormField[];
   @Input() buttonActionText: string = 'Create';
-  // @Output() formStatusChanges = new EventEmitter<FormControlStatus>();
-  // @Output() formValueChanges = new EventEmitter<object>();
+  @Output() formStatusChanges = new EventEmitter<FormControlStatus>();
+  @Output() formValueChanges = new EventEmitter<object>();
   @Output() submitValue = new EventEmitter<object>();
 
   formGroup!: FormGroup<object>;
 
-  constructor(private fb: FormBuilder) {
-    console.debug(this.formGroup);
-  }
-
   ngAfterViewInit(): void {
-    this.formGroup = this.generateFormGroup(this.dynFormFields);
-    console.debug(this.formGroup);
+    // this.formGroup = this.generateFormGroup(this.dynFormFields);
 
-    // this.formGroup = this.toFormGroup(this.dynFormFields);
-    // this.formGroup.valueChanges.subscribe({
-    //   next: (value) => this.formValueChanges.emit(value),
-    //   error: (err) => console.error(err),
-    //   complete: () => console.log('Value change complete.'),
-    // });
-    // this.formGroup.statusChanges.subscribe({
-    //   next: (value) => this.formStatusChanges.emit(value),
-    //   error: (err) => console.error(err),
-    //   complete: () => '',
-    // });
+    this.formGroup.valueChanges.subscribe({
+      next: (value) => this.formValueChanges.emit(value),
+      error: (err) => console.error(err),
+    });
+    this.formGroup.statusChanges.subscribe({
+      next: (value) => this.formStatusChanges.emit(value),
+      error: (err) => console.error(err),
+    });
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['dynFormFields']) {
       this.formGroup = this.generateFormGroup(this.dynFormFields);
-      console.debug(this.formGroup);
+      console.debug();
     }
   }
 
   generateFormGroup(formFields: AbstractFormField[]): FormGroup {
-    const formGroup = this.fb.group({});
+    const formGroup = new FormGroup({});
 
     formFields.forEach((formField) => {
       switch (formField.formFieldType) {
-        case 'FormfieldObject':
-          formGroup.addControl(
-            formField.name,
-            this.generateFormGroup((formField as FormFieldObject).formFields)
-          );
-          break;
-
         case 'FormFieldArray':
           const formFieldArray = formField as FormFieldArray;
-          let newFormGroup = this.fb.group({});
 
-          if (
-            formFieldArray.formFieldModel.formFieldType == 'FormfieldObject'
-          ) {
-            const controls = this.generateFormGroup(
-              (formField as FormFieldObject).formFields
-            ).controls;
-            Object.keys(controls).forEach((key) => {
-              newFormGroup.addControl(key, controls[key]);
-            });
-          } else {
-            newFormGroup = this.generateFormGroup(formFieldArray.formFields);
-          }
-
-          const validators = formFieldArray.distinct
-            ? [distinctValuesValidator()]
-            : [];
           formGroup.addControl(
-            formField.name,
-            this.fb.array([newFormGroup], validators)
+            formFieldArray.name,
+            this.generateFormArray(formFieldArray)
           );
+
+          break;
+
+        case 'FormfieldObject':
+          const FormFieldObject = formField as FormfieldObject;
+
+          formGroup.addControl(
+            FormFieldObject.name,
+            this.generateFormGroup(FormFieldObject.formFields)
+          );
+
           break;
 
         default:
-          // const formControl = new FormControl(
-          //   (formField as FormField<unknown>).value
-          // );
-          // if (formField.required) {
-          //   formControl.addValidators(Validators.required);
-          // }
+          const formFieldControl = formField as FormField<unknown>;
           formGroup.addControl(
-            formField.name,
-            this.generateFormControl(formField)
+            formFieldControl.name,
+            this.generateFormControl(formFieldControl)
           );
+
           break;
       }
     });
@@ -179,114 +153,55 @@ export class DynamicForm implements AfterViewInit {
     return formGroup;
   }
 
-  generateFormControl(formField: AbstractFormField): FormControl {
-    const formControl = new FormControl(
-      (formField as FormField<unknown>).value
-    );
-    if (formField.required) {
-      formControl.addValidators(Validators.required);
+  generateFormArray(
+    formFieldArray: FormFieldArray
+  ): FormArray<AbstractControl> {
+    const formArray = new FormArray<AbstractControl>([]);
+
+    let validators: ValidatorFn[] = [];
+    if (formFieldArray.distinct) {
+      validators.push(distinctValidator());
     }
-    return formControl;
+    formArray.addValidators(validators);
+
+    formFieldArray.formFields.forEach((formField) => {
+      switch (formField.formFieldType) {
+        case 'FormFieldArray':
+          formArray.push(this.generateFormArray(formField as FormFieldArray));
+          break;
+
+        case 'FormfieldObject':
+          formArray.push(
+            this.generateFormGroup((formField as FormfieldObject).formFields)
+          );
+          break;
+
+        default:
+          formArray.push(
+            this.generateFormControl(formField as FormField<unknown>)
+          );
+          break;
+      }
+    });
+
+    return formArray;
   }
 
-  // generateFormControls(formFields: AbstractFormField[]): FormGroup<object> {
-  //   // const formGroup = new FormGroup({});
-  //   const formGroup = this.fb.group({});
+  generateFormControl<T>(formField: FormField<T>): FormControl {
+    let validators: ValidatorFn[] = [];
 
-  //   formFields.forEach((formField) => {
-  //     switch (formField.formFieldType) {
-  //       case 'FormfieldObject':
-  //         formGroup.addControl(
-  //           formField.name,
-  //           this.generateFormControls((formField as FormfieldObject).formFields)
-  //         );
-  //         break;
+    if (formField.required) {
+      validators.push(Validators.required);
+    }
 
-  //       case 'FormFieldArray':
-  //         formGroup.addControl(
-  //           formField.name,
-  //           this.toFormArray(formField as FormFieldArray)
-  //         );
-  //         break;
-
-  //       default:
-  //         formGroup.addControl(
-  //           formField.name,
-  //           this.toFormControl(formField as FormField<unknown>)
-  //         );
-  //         break;
-  //     }
-  //   });
-
-  //   return formGroup;
-  // }
-
-  // toFormArray(formFieldArray: FormFieldArray): FormArray {
-  //   const validators = formFieldArray.distinct
-  //     ? [distinctValuesValidator()]
-  //     : [];
-  //   const formGroup = this.fb.array([], validators);
-
-  //   formFieldArray.formFields.forEach((formField) => {
-  //     switch (formField.formFieldType) {
-  //       case 'FormfieldObject':
-  //         formGroup.push(
-  //           new FormControl(
-  //             formField.name,
-  //             this.generateFormControls(
-  //               (formField as FormfieldObject).formFields
-  //             )
-  //           )
-  //         );
-  //         break;
-
-  //       case 'FormFieldArray':
-  //         formGroup.push(
-  //           new FormControl(
-  //             formField.name,
-  //             this.generateFormControls(
-  //               (formField as FormFieldArray).formFields
-  //             )
-  //           )
-  //         );
-  //         break;
-
-  //       default:
-  //         formGroup.push(
-  //           new FormControl(
-  //             formField.name,
-  //             this.toFormControl(formField as FormField<unknown>)
-  //           )
-  //         );
-  //         break;
-  //     }
-  //   });
-
-  //   return formGroup;
-  // }
-
-  // toFormControl(formField: FormField<unknown>): FormControl {
-  //   const formControl = new FormControl(formField.value);
-
-  //   if (formField.required) {
-  //     formControl.addValidators(Validators.required);
-  //   }
-
-  //   return formControl;
-  // }
-
-  // onReceivedStatusChanges(status: FormControlStatus) {
-  //   // this.formStatus = status;
-  //   this.formStatusChanges.emit(status);
-  // }
-
-  // onReceivedValueChanges(value: object) {
-  //   // this.formValue = value;
-  //   this.formValueChanges.emit(value);
-  // }
+    return new FormControl(
+      formField.value,
+      new FormControl<T>(formField.value, validators)
+    );
+  }
 
   submit() {
     this.submitValue.emit(this.formGroup.value);
-    this.formGroup.reset();
+    // this.formGroup.reset();
   }
 }

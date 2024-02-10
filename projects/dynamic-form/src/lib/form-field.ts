@@ -1,7 +1,7 @@
 // prettier-ignore
 
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
 import {
   ReactiveFormsModule,
   AbstractControl,
@@ -34,7 +34,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
   standalone: true,
   imports: [MatInputModule, ReactiveFormsModule, MatFormFieldModule],
   template: `
-    @if (!dynFormField.hidden){
+    @if (!formField.hidden){
     <mat-form-field class="full-width" appearance="fill">
       <mat-label [attr.for]="formField.name">{{ formField.title }}</mat-label>
       <input
@@ -62,8 +62,12 @@ import { MatToolbarModule } from '@angular/material/toolbar';
   `,
 })
 export class DynamicFormFieldInput implements OnInit {
-  @Input() dynFormField!: FormField<unknown>;
-  @Input() dynFormControl!: AbstractControl<unknown, unknown>;
+  @Input() set dynFormControl(value: AbstractControl<unknown, unknown> | null) {
+    this.formControl = value as FormControl<unknown>;
+  }
+  @Input() set dynFormField(value: FormField<unknown>) {
+    this.formField = value as FormFieldInput<unknown>;
+  }
 
   formControl!: FormControl<unknown>;
   formControlErrorMessage!: FormControlErrorMessage;
@@ -75,9 +79,6 @@ export class DynamicFormFieldInput implements OnInit {
   }
 
   ngOnInit(): void {
-    this.formControl = this.dynFormControl as FormControl<unknown>;
-    this.formField = this.dynFormField as FormFieldInput<unknown>;
-
     this.formControlErrorMessage = new FormControlErrorMessage(
       this.formControl
     );
@@ -214,11 +215,11 @@ export class DynamicFormfield implements OnInit {
       <mat-card-actions align="end">
         @if(isShowFormFieldShowen) {
         <button mat-icon-button (click)="toggleShowFormField()">
-          <mat-icon>keyboard_arrow_up</mat-icon>
+          <mat-icon>remove</mat-icon>
         </button>
         } @else {
         <button mat-icon-button (click)="toggleShowFormField()">
-          <mat-icon>keyboard_arrow_down</mat-icon>
+          <mat-icon>add</mat-icon>
         </button>
         }
       </mat-card-actions>
@@ -285,29 +286,35 @@ export class DynamicFormFieldObject implements OnInit {
         <mat-card-subtitle>{{ formFieldArray.subtitle }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content class="card-content">
-      @if(isShowFormFieldShowen) { 
-        @for (formField of formFieldArray.formFields; track formField; let index = $index) {
-        @switch(formField.formFieldType) { 
-          @case('FormFieldArray') {
+        @if(isShowFormFieldShowen) { @for (formField of
+        formFieldArray.formFields; track formField; let index = $index) {
+        @switch(formField.formFieldType) { @case('FormFieldArray') {
         <dyn-form-field-array
           [dynFormField]="formField"
-          [dynFormGroup]="formArray.controls[index]"
+          [dynFormGroup]="formArray.get(index.toString())"
         ></dyn-form-field-array>
         } @case ('FormfieldObject') {
         <dyn-form-field-object
           [dynFormField]="formField"
-          [dynFormGroup]="formArray.controls[index]"
+          [dynFormGroup]="formArray.get(index.toString())"
           [expended]="isShowFormFieldShowen"
         ></dyn-form-field-object>
         } @default {
         <dyn-form-field
           [dynFormField]="formField"
-          [dynFormControl]="formArray.controls[index]"
+          [dynFormControl]="formArray.get(index.toString())"
         ></dyn-form-field>
         } } } }
       </mat-card-content>
       <mat-card-actions align="end">
-        <button mat-icon-button (click)="removeFormField()">
+        <button
+          mat-icon-button
+          (click)="removeFormField()"
+          [disabled]="
+            formFieldArray.formFieldModel.required &&
+            formFieldArray.formFields.length <= 1
+          "
+        >
           <mat-icon>remove</mat-icon>
         </button>
         <button mat-icon-button (click)="addFormField()">
@@ -338,6 +345,8 @@ export class DynamicFormFieldArray implements OnInit {
   formFieldSource!: FormControl<unknown>;
   isShowFormFieldShowen!: boolean;
 
+  constructor(private cdr: ChangeDetectorRef) {}
+
   ngOnInit() {
     this.isShowFormFieldShowen =
       this.formFieldArray.formFieldModel.required ||
@@ -346,18 +355,22 @@ export class DynamicFormFieldArray implements OnInit {
   }
 
   addFormField() {
-    if (!this.isShowFormFieldShowen && this.formArray.length == 1) {
-      this.isShowFormFieldShowen = true;
-    } else {
+    if (this.isShowFormFieldShowen) {
+      this.formFieldArray.formFields.push(this.formFieldArray.formFieldModel);
       this.formArray.push(
-        new FormControl('', this.formArray.controls[0].validator)
+        this.cloneFormControl(
+          this.formArray.get('0') as AbstractControl<any, any>
+        )
       );
+    } else {
+      this.isShowFormFieldShowen = true;
     }
   }
 
   removeFormField() {
     if (this.formArray.length > 1) {
       this.formArray.removeAt(this.formArray.length - 1);
+      this.formFieldArray.formFields.pop();
       this.isShowFormFieldShowen = true;
     } else {
       this.isShowFormFieldShowen = this.formFieldArray.formFieldModel.required;
@@ -367,14 +380,32 @@ export class DynamicFormFieldArray implements OnInit {
   setFormGroupState() {
     if (!this.isShowFormFieldShowen) {
       this.formArray.disable();
-      // this.formArray.controls.forEach((value) => {
-      //   value.disable();
-      // });
     } else {
       this.formArray.enable();
-      // this.formArray.controls.forEach((value) => {
-      //   value.enable();
-      // });
     }
+  }
+
+  cloneFormControl(
+    control: AbstractControl,
+    cloneValue: boolean = false
+  ): AbstractControl {
+    if (control instanceof FormGroup) {
+      return this.cloneFormGroup(control);
+    } else if (control instanceof FormControl) {
+      return new FormControl(
+        cloneValue ? control.value : '',
+        control.validator
+      );
+    }
+    return control;
+  }
+
+  cloneFormGroup(group: FormGroup): FormGroup {
+    const clonedGroup: { [key: string]: AbstractControl } = {};
+    Object.keys(group.controls).forEach((key) => {
+      const control = group.controls[key];
+      clonedGroup[key] = this.cloneFormControl(control);
+    });
+    return new FormGroup(clonedGroup);
   }
 }

@@ -1,5 +1,5 @@
-import { FormControl, FormGroupDirective, NgForm } from "@angular/forms";
-import { ErrorStateMatcher } from "@angular/material/core";
+import { AbstractControl, FormControl, FormGroupDirective, NgForm } from '@angular/forms';
+import { ErrorStateMatcher } from '@angular/material/core';
 
 /** Error when invalid control is dirty, touched, or submitted. */
 export class CustomErrorStateMatcher implements ErrorStateMatcher {
@@ -17,24 +17,32 @@ export class CustomErrorStateMatcher implements ErrorStateMatcher {
 }
 
 export class FormControlErrorMessage {
-  formControl: FormControl;
+  formControl: AbstractControl;
 
-  constructor(formControl: FormControl) {
+  constructor(formControl: AbstractControl) {
     this.formControl = formControl;
   }
 
   getErrorMessage(): string {
     let message: string = 'Unknown error';
-    if (this.formControl.hasError('required')) {
-      message = 'You must enter a value';
-    }
+    const errors = this.formControl.errors;
 
-    if (this.formControl.hasError('email')) {
-      message = 'Not a valid email';
-    }
-
-    if (this.formControl.hasError('duplicateValue')) {
-      message = 'This value is already in use';
+    console.debug(errors)
+    if (errors) {
+      for (const errorName in errors) {
+        console.debug(errorName);
+        switch (errorName) {
+          case 'required':
+            message = 'You must enter a value';
+            break;
+          case 'email':
+            message = 'Not a valid email';
+            break;
+          case 'duplicateValues':
+            message = 'The value is already in use';
+            break;
+        }
+      }
     }
 
     return message;
