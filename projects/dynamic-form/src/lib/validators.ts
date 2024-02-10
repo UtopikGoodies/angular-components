@@ -1,6 +1,7 @@
 import {
   AbstractControl,
   FormArray,
+  FormGroup,
   ValidationErrors,
   ValidatorFn,
 } from '@angular/forms';
@@ -58,5 +59,36 @@ export function duplicateValueValidatorInArray(): ValidatorFn {
     }
 
     return null; // No duplicates found, no error
+  };
+}
+
+// ChatGPT
+// export function distinctValuesValidator(): ValidatorFn {
+//   return (control: AbstractControl): ValidationErrors | null => {
+//     if (!(control instanceof FormGroup)) {
+//       return null; // If not a FormGroup, don't perform validation
+//     }
+
+//     const group = control as FormGroup; // Cast control to FormGroup
+//     const controlValues = Object.values(group.value);
+//     const distinctValues = new Set(controlValues);
+//     if (controlValues.length !== distinctValues.size) {
+//       return { distinctValues: true }; // Validation error if not all values are distinct
+//     }
+//     return null; // No error
+//   };
+// }
+
+// Gemini
+export function distinctValuesValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const controlValues = control.value;
+    const uniqueValues = new Set(controlValues);
+
+    if (controlValues.length !== uniqueValues.size) {
+      return { distinctValues: true }; // Return an error object
+    }
+
+    return null; // No errors
   };
 }

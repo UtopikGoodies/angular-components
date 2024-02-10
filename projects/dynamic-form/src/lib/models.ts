@@ -18,7 +18,7 @@ export class FormFieldArray extends AbstractFormField {
   subtitle!: string;
   formFieldModel!: AbstractFormField;
   formFields: AbstractFormField[] = [];
-  uniqueValue: boolean = false;
+  distinct: boolean = false;
 
   constructor(data: {
     name: string;
@@ -26,7 +26,7 @@ export class FormFieldArray extends AbstractFormField {
     subtitle?: string;
     formFieldModel?: AbstractFormField;
     formFields?: AbstractFormField[];
-    uniqueValue?: boolean;
+    distinct?: boolean;
   }) {
     super();
     Object.assign(this, data);
