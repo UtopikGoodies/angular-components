@@ -1,0 +1,18 @@
+:host {
+  &.dyn-mdc-form {
+    position: relative;
+  }
+
+  &.dyn-mdc-form-actions-align-end {
+    display: flex; 
+    justify-content: flex-end;
+  }
+}
+
+button {
+  margin: 5px;
+}
+
+.error-text {
+  color: red;
+}
