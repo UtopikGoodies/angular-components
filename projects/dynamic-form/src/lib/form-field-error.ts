@@ -1,4 +1,10 @@
-import { AbstractControl, FormControl, FormGroupDirective, NgForm } from '@angular/forms';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  FormGroupDirective,
+  NgForm,
+} from '@angular/forms';
 import { ErrorStateMatcher } from '@angular/material/core';
 
 /** Error when invalid control is dirty, touched, or submitted. */
@@ -27,10 +33,8 @@ export class FormControlErrorMessage {
     let message: string = 'Unknown error';
     const errors = this.formControl.errors;
 
-    console.debug(errors)
     if (errors) {
       for (const errorName in errors) {
-        console.debug(errorName);
         switch (errorName) {
           case 'required':
             message = 'You must enter a value';
@@ -39,7 +43,7 @@ export class FormControlErrorMessage {
             message = 'Not a valid email';
             break;
           case 'duplicateValues':
-            message = 'The value is already in use';
+            message = 'The alue is already in use';
             break;
         }
       }
@@ -47,4 +51,33 @@ export class FormControlErrorMessage {
 
     return message;
   }
+
+  // getErrorsMessageDetailed(): string[] {
+  //   let errorMessage = [''];
+
+  //   if (this.formControl.invalid && this.formControl instanceof FormGroup) {
+  //     const formGroup = this.formControl as FormGroup;
+
+  //     Object.keys(formGroup.controls).forEach((controlName) => {
+  //       const control = formGroup.get(controlName);
+
+  //       if (control instanceof FormGroup) {
+  //         // If the control is a nested FormGroup, recursively check its controls
+  //         // Object.keys(control.controls).forEach(nestedControlName => {
+  //         //   const nestedControl = control.get(nestedControlName);
+  //         //   if (nestedControl && nestedControl.invalid) {
+  //         //     errorMessage.push(`Nested Control ${controlName}.${nestedControlName} is invalid.`);
+  //         //   }
+  //         // });
+  //       } else {
+  //         // If the control is a regular FormControl, check its validity
+  //         if (control && control.invalid) {
+  //           errorMessage.push(`Form field "${controlName}" is invalid.`);
+  //         }
+  //       }
+  //     });
+  //   }
+
+  //   return errorMessage;
+  // }
 }

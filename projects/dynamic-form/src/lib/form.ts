@@ -3,6 +3,7 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnInit,
   Output,
   SimpleChanges,
   ViewEncapsulation,
@@ -33,6 +34,8 @@ import {
 import { DynamicFormActions } from './form-actions';
 import { MatButtonModule } from '@angular/material/button';
 import { distinctValidator } from './validators';
+import { FormControlErrorMessage } from './form-field-error';
+import { MatListModule } from '@angular/material/list';
 
 @Component({
   selector: 'dyn-form',
@@ -44,9 +47,9 @@ import { distinctValidator } from './validators';
     DynamicFormFieldObject,
     MatButtonModule,
     ReactiveFormsModule,
+    MatListModule,
   ],
   template: `
-    @if(formGroup){
     <form [formGroup]="formGroup">
       @for (formField of dynFormFields; track formField) {
       <div class="form-row">
@@ -70,33 +73,40 @@ import { distinctValidator } from './validators';
       }
     </form>
     <dyn-form-actions actionPosition="end">
+      @if(buttonDelete) {
+      <button mat-raised-button color="accent" (click)="delete()">
+        Delete
+      </button>
+      }
+    @if(formGroup){
       <button
         mat-raised-button
         color="primary"
-        [disabled]="formGroup.status === 'INVALID'"
+        [disabled]="!formGroup.valid"
         (click)="submit()"
       >
         {{ buttonActionText }}
       </button>
-    </dyn-form-actions>
     }
+    </dyn-form-actions>
   `,
   styleUrls: ['form.scss'],
   host: { class: 'dyn-mdc-form' },
   encapsulation: ViewEncapsulation.None,
 })
-export class DynamicForm implements AfterViewInit {
+export class DynamicForm implements OnInit {
   @Input() dynFormFields!: AbstractFormField[];
+  @Input() buttonDelete: boolean = false;
   @Input() buttonActionText: string = 'Create';
   @Output() formStatusChanges = new EventEmitter<FormControlStatus>();
   @Output() formValueChanges = new EventEmitter<object>();
+  @Output() deleteValue = new EventEmitter();
   @Output() submitValue = new EventEmitter<object>();
 
   formGroup!: FormGroup<object>;
 
-  ngAfterViewInit(): void {
-    // this.formGroup = this.generateFormGroup(this.dynFormFields);
-
+  ngOnInit(): void {
+    this.formGroup = this.generateFormGroup(this.dynFormFields);
     this.formGroup.valueChanges.subscribe({
       next: (value) => this.formValueChanges.emit(value),
       error: (err) => console.error(err),
@@ -106,13 +116,27 @@ export class DynamicForm implements AfterViewInit {
       error: (err) => console.error(err),
     });
   }
+  
 
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['dynFormFields']) {
-      this.formGroup = this.generateFormGroup(this.dynFormFields);
-      console.debug();
-    }
-  }
+  // ngAfterViewInit(): void {
+  //   // this.formGroup = this.generateFormGroup(this.dynFormFields);
+
+  //   this.formGroup.valueChanges.subscribe({
+  //     next: (value) => this.formValueChanges.emit(value),
+  //     error: (err) => console.error(err),
+  //   });
+  //   this.formGroup.statusChanges.subscribe({
+  //     next: (value) => this.formStatusChanges.emit(value),
+  //     error: (err) => console.error(err),
+  //   });
+  // }
+
+  // ngOnChanges(changes: SimpleChanges) {
+  //   if (changes['dynFormFields']) {
+  //     this.formGroup = this.generateFormGroup(this.dynFormFields);
+  //     console.debug();
+  //   }
+  // }
 
   generateFormGroup(formFields: AbstractFormField[]): FormGroup {
     const formGroup = new FormGroup({});
@@ -194,14 +218,14 @@ export class DynamicForm implements AfterViewInit {
       validators.push(Validators.required);
     }
 
-    return new FormControl(
-      formField.value,
-      new FormControl<T>(formField.value, validators)
-    );
+    return new FormControl(formField.value, validators);
+  }
+
+  delete() {
+    this.deleteValue.emit();
   }
 
   submit() {
     this.submitValue.emit(this.formGroup.value);
-    // this.formGroup.reset();
   }
 }

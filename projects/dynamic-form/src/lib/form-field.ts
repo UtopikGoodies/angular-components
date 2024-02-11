@@ -1,7 +1,14 @@
 // prettier-ignore
 
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  Input,
+  ChangeDetectorRef,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
 import {
   ReactiveFormsModule,
   AbstractControl,
@@ -175,7 +182,7 @@ export class DynamicFormFieldSelect implements OnInit {
   `,
   styles: ``,
 })
-export class DynamicFormfield implements OnInit {
+export class DynamicFormfield {
   @Input() set dynFormControl(value: AbstractControl<unknown, unknown> | null) {
     this.formControl = value as FormControl;
   }
@@ -185,10 +192,6 @@ export class DynamicFormfield implements OnInit {
 
   formControl!: FormControl;
   formField!: FormField<unknown>;
-
-  ngOnInit() {
-    console.debug();
-  }
 }
 
 @Component({
@@ -212,6 +215,7 @@ export class DynamicFormfield implements OnInit {
         </div>
         } }
       </mat-card-content>
+      @if(!isParentArray()){
       <mat-card-actions align="end">
         @if(isShowFormFieldShowen) {
         <button mat-icon-button (click)="toggleShowFormField()">
@@ -223,6 +227,7 @@ export class DynamicFormfield implements OnInit {
         </button>
         }
       </mat-card-actions>
+      }
     </mat-card>
   `,
   styles: `
@@ -245,10 +250,7 @@ export class DynamicFormFieldObject implements OnInit {
   isShowFormFieldShowen!: boolean;
 
   ngOnInit(): void {
-    this.isShowFormFieldShowen =
-      this.formfieldObject.required ||
-      this.expended ||
-      this.formfieldObject.formFields.length > 0;
+    this.isShowFormFieldShowen = this.formfieldObject.required || this.expended;
     this.setFormGroupState();
   }
 
@@ -263,6 +265,10 @@ export class DynamicFormFieldObject implements OnInit {
     } else {
       this.formGroup.enable();
     }
+  }
+
+  isParentArray(): boolean {
+    return this.formGroup.parent instanceof FormArray;
   }
 }
 
@@ -286,9 +292,9 @@ export class DynamicFormFieldObject implements OnInit {
         <mat-card-subtitle>{{ formFieldArray.subtitle }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content class="card-content">
-        @if(isShowFormFieldShowen) { @for (formField of
-        formFieldArray.formFields; track formField; let index = $index) {
-        @switch(formField.formFieldType) { @case('FormFieldArray') {
+        @if(isFormFieldShowen) { @for (formField of formFieldArray.formFields;
+        track formField; let index = $index) { @switch(formField.formFieldType)
+        { @case('FormFieldArray') {
         <dyn-form-field-array
           [dynFormField]="formField"
           [dynFormGroup]="formArray.get(index.toString())"
@@ -297,7 +303,7 @@ export class DynamicFormFieldObject implements OnInit {
         <dyn-form-field-object
           [dynFormField]="formField"
           [dynFormGroup]="formArray.get(index.toString())"
-          [expended]="isShowFormFieldShowen"
+          [expended]="isFormFieldShowen"
         ></dyn-form-field-object>
         } @default {
         <dyn-form-field
@@ -311,8 +317,8 @@ export class DynamicFormFieldObject implements OnInit {
           mat-icon-button
           (click)="removeFormField()"
           [disabled]="
-            formFieldArray.formFieldModel.required &&
-            formFieldArray.formFields.length <= 1
+            (formFieldArray.formFieldModel.required && formArray.length <= 1) ||
+            !isFormFieldShowen
           "
         >
           <mat-icon>remove</mat-icon>
@@ -333,29 +339,35 @@ export class DynamicFormFieldObject implements OnInit {
   `,
 })
 export class DynamicFormFieldArray implements OnInit {
-  @Input() set dynFormField(value: AbstractFormField) {
+  @Input()
+  get dynFormField(): AbstractFormField {
+    return this.formFieldArray;
+  }
+  set dynFormField(value: AbstractFormField) {
     this.formFieldArray = value as FormFieldArray;
   }
-  @Input() set dynFormGroup(value: AbstractControl<unknown, unknown> | null) {
+  @Input() 
+  get dynFormGroup(): FormArray {
+    return this.formArray;
+  }
+  set dynFormGroup(value: AbstractControl<unknown, unknown> | null) {
     this.formArray = value as FormArray;
   }
 
   formArray!: FormArray;
   formFieldArray!: FormFieldArray;
-  formFieldSource!: FormControl<unknown>;
-  isShowFormFieldShowen!: boolean;
-
-  constructor(private cdr: ChangeDetectorRef) {}
+  isFormFieldShowen!: boolean;
 
   ngOnInit() {
-    this.isShowFormFieldShowen =
+    this.showFormField(
       this.formFieldArray.formFieldModel.required ||
-      this.formFieldArray.formFields.length > 0;
+        this.formFieldArray.formFields.length > 1
+    );
     this.setFormGroupState();
   }
 
   addFormField() {
-    if (this.isShowFormFieldShowen) {
+    if (this.isFormFieldShowen) {
       this.formFieldArray.formFields.push(this.formFieldArray.formFieldModel);
       this.formArray.push(
         this.cloneFormControl(
@@ -363,25 +375,27 @@ export class DynamicFormFieldArray implements OnInit {
         )
       );
     } else {
-      this.isShowFormFieldShowen = true;
+      this.showFormField(true);
     }
+    this.setFormGroupState();
   }
 
   removeFormField() {
     if (this.formArray.length > 1) {
       this.formArray.removeAt(this.formArray.length - 1);
       this.formFieldArray.formFields.pop();
-      this.isShowFormFieldShowen = true;
+      this.showFormField(true);
     } else {
-      this.isShowFormFieldShowen = this.formFieldArray.formFieldModel.required;
+      this.showFormField(this.formFieldArray.formFieldModel.required);
     }
+    this.setFormGroupState();
   }
 
   setFormGroupState() {
-    if (!this.isShowFormFieldShowen) {
-      this.formArray.disable();
-    } else {
+    if (this.isFormFieldShowen) {
       this.formArray.enable();
+    } else {
+      this.formArray.disable();
     }
   }
 
@@ -407,5 +421,10 @@ export class DynamicFormFieldArray implements OnInit {
       clonedGroup[key] = this.cloneFormControl(control);
     });
     return new FormGroup(clonedGroup);
+  }
+
+  showFormField(value: boolean) {
+    this.isFormFieldShowen = value;
+    this.setFormGroupState();
   }
 }
