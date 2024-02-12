@@ -35,6 +35,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { FormGenerator } from './form-generator';
 
 @Component({
   selector: 'dyn-form-field-input',
@@ -346,7 +347,7 @@ export class DynamicFormFieldArray implements OnInit {
   set dynFormField(value: AbstractFormField) {
     this.formFieldArray = value as FormFieldArray;
   }
-  @Input() 
+  @Input()
   get dynFormGroup(): FormArray {
     return this.formArray;
   }
@@ -361,7 +362,7 @@ export class DynamicFormFieldArray implements OnInit {
   ngOnInit() {
     this.showFormField(
       this.formFieldArray.formFieldModel.required ||
-        this.formFieldArray.formFields.length > 1
+        this.formFieldArray.formFields.length > 0
     );
     this.setFormGroupState();
   }
@@ -370,9 +371,10 @@ export class DynamicFormFieldArray implements OnInit {
     if (this.isFormFieldShowen) {
       this.formFieldArray.formFields.push(this.formFieldArray.formFieldModel);
       this.formArray.push(
-        this.cloneFormControl(
-          this.formArray.get('0') as AbstractControl<any, any>
-        )
+        FormGenerator.generateFormGroup([this.formFieldArray.formFieldModel]).get(this.formFieldArray.formFieldModel.name)
+        // this.cloneFormControl(
+        //   this.formArray.get('0') as AbstractControl<any, any>
+        // )
       );
     } else {
       this.showFormField(true);
@@ -399,29 +401,29 @@ export class DynamicFormFieldArray implements OnInit {
     }
   }
 
-  cloneFormControl(
-    control: AbstractControl,
-    cloneValue: boolean = false
-  ): AbstractControl {
-    if (control instanceof FormGroup) {
-      return this.cloneFormGroup(control);
-    } else if (control instanceof FormControl) {
-      return new FormControl(
-        cloneValue ? control.value : '',
-        control.validator
-      );
-    }
-    return control;
-  }
+  // cloneFormControl(
+  //   control: AbstractControl,
+  //   cloneValue: boolean = false
+  // ): AbstractControl {
+  //   if (control instanceof FormGroup) {
+  //     return this.cloneFormGroup(control);
+  //   } else if (control instanceof FormControl) {
+  //     return new FormControl(
+  //       cloneValue ? control.value : '',
+  //       control.validator
+  //     );
+  //   }
+  //   return control;
+  // }
 
-  cloneFormGroup(group: FormGroup): FormGroup {
-    const clonedGroup: { [key: string]: AbstractControl } = {};
-    Object.keys(group.controls).forEach((key) => {
-      const control = group.controls[key];
-      clonedGroup[key] = this.cloneFormControl(control);
-    });
-    return new FormGroup(clonedGroup);
-  }
+  // cloneFormGroup(group: FormGroup): FormGroup {
+  //   const clonedGroup: { [key: string]: AbstractControl } = {};
+  //   Object.keys(group.controls).forEach((key) => {
+  //     const control = group.controls[key];
+  //     clonedGroup[key] = this.cloneFormControl(control);
+  //   });
+  //   return new FormGroup(clonedGroup);
+  // }
 
   showFormField(value: boolean) {
     this.isFormFieldShowen = value;
