@@ -30,9 +30,9 @@ export class FormFieldArray extends AbstractFormField {
   }) {
     super();
     Object.assign(this, data);
-    if (this.formFields.length == 0) {
-      this.formFields.push(this.formFieldModel);
-    }
+    // if (this.formFields.length == 0) {
+    //   this.formFields.push(this.formFieldModel);
+    // }
   }
 }
 

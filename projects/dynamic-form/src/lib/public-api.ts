@@ -9,3 +9,5 @@ export * from './form';
 export * from './models';
 export * from './validators';
 export * from './module';
+export * from './dialog';
+export * from './form-generator';
