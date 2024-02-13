@@ -25,5 +25,5 @@ jobs:
       run: |
         projects=$(node -pe "Object.keys(require('./angular.json').projects).join(' ')")
         for project in $projects; do
-          ng build $project
+          npm run build $project
         done
