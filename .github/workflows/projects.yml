@@ -22,9 +22,10 @@ jobs:
         with:
           github-token: ${{ secrets.WORKFLOW_TOKEN }}
           script: |
-            const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+            const owner = github.context.repo.owner;
+            const repo = github.context.repo.repo;
             const workflow_id = 'build';
-            const ref = github.context.ref;
+            const ref = github.event.ref || github.sha; // Fallback to github.sha if ref is not available
             const branchOrTag = ref.startsWith('refs/tags/') ? ref.replace('refs/tags/', '') : ref;
 
             console.log(owner);
