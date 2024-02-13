@@ -1,0 +1,29 @@
+name: Build
+
+on:
+  push:
+    tags: [ 'v*.*.*' ]
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+
+    - name: Install dependencies
+      run: yarn install
+
+    - name: Build Angular Projects
+      run: |
+        projects=$(node -pe "Object.keys(require('./angular.json').projects).join(' ')")
+        for project in $projects; do
+          ng build $project
+        done
