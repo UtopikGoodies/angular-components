@@ -42,7 +42,7 @@ jobs:
                 owner,
                 repo,
                 workflow_id,
-                branchOrTag,
+                ref: branchOrTag,
                 inputs: {
                   library: library,
                 },
