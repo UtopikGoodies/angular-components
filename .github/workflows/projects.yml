@@ -30,7 +30,7 @@ jobs:
             if (github.event_name === 'pull_request') {
               ref = github.event.pull_request.head.ref;
             } else {
-              ref = github.context.ref.startsWith('refs/tags/') ? github.context.ref.replace('refs/tags/', '') : github.context.ref;
+              ref = context.ref.startsWith('refs/tags/') ? context.ref.replace('refs/tags/', '') : context.ref;
             }
 
             console.log(owner);
