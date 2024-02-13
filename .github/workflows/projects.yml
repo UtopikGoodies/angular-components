@@ -24,7 +24,7 @@ jobs:
             # const workflow_id = 'build';
             # const {GITHUB_REF} = process.env;
 
-            console.log(owner);
+            # console.log(owner);
             # console.log(repo);
             # console.log(workflow_id);
             # console.log(GITHUB_REF);
