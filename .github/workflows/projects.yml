@@ -25,7 +25,8 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const workflow_id = 'build.yml';
-            const branchOrTag = github.ref.startsWith('refs/tags/') ? github.ref.replace('refs/tags/', '') : github.ref;
+            const ref = github.ref;
+            const branchOrTag = ref.startsWith('refs/tags/') ? ref.replace('refs/tags/', '') : ref;
 
             console.log(owner);
             console.log(repo);
