@@ -31,7 +31,7 @@ jobs:
             let ref;
             if (context.eventName === 'pull_request') {
               // Get the pull request details
-              const pullRequestNumber = github.event.pull_request.number;
+              const pullRequestNumber = context.payload.pull_request.number;
               const response = await github.rest.pulls.get({
                 owner,
                 repo,
