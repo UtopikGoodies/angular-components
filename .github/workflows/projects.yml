@@ -25,13 +25,17 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const workflow_id = 'build.yml';
-            const ref = github.ref || '';
-            const branchOrTag = ref.startsWith('refs/tags/') ? ref.replace('refs/tags/', '') : ref;
+            
+            let branchOrTag;
+            if (github.event_name === 'pull_request') {
+              branchOrTag = github.event.pull_request.head.ref;
+            } else {
+              branchOrTag = github.context.ref.startsWith('refs/tags/') ? github.context.ref.replace('refs/tags/', '') : github.context.ref;
+            }
 
             console.log(owner);
             console.log(repo);
             console.log(workflow_id);
-            console.log(ref);
             console.log(branchOrTag);
 
             const projects = require('./angular.json').projects;
