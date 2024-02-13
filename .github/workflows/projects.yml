@@ -10,7 +10,7 @@ on:
       - "projects/**"
 
 jobs:
-  build:
+  projects:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,14 +25,14 @@ jobs:
             const ref = github.context.ref;
             const branchOrTag = ref.startsWith('refs/tags/') ? ref.replace('refs/tags/', '') : ref;
 
-
             console.log(owner);
             console.log(repo);
             console.log(workflow_id);
             console.log(branchOrTag);
 
-            const projects = require('./angular.json').projects;
-            const libraries = Object.keys(projects).filter(name => projects[name].projectType === "library").join(' ');
+            const fs = require('fs');
+            const projects = JSON.parse(fs.readFileSync('./angular.json', 'utf8')).projects;
+            const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
             console.log(libraries);
 
             for library in $libraries; do
