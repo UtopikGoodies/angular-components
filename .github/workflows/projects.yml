@@ -35,16 +35,18 @@ jobs:
             console.log(workflow_id);
             console.log(branchOrTag);
 
-            const fs = require('fs');
-            const projects = JSON.parse(fs.readFileSync('./angular.json', 'utf8')).projects;
+            const projects = require('./angular.json').projects;
             const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
             console.log(libraries);
 
-            for library in $libraries; do
-              github.rest.actions.createWorkflowDispatch({
+            for (const library of libraries) {
+              await github.rest.actions.createWorkflowDispatch({
                 owner,
                 repo,
                 workflow_id,
                 ref,
+                inputs: {
+                  library: library,
+                },
               });
-            done
+            }

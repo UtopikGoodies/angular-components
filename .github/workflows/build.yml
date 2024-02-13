@@ -3,8 +3,8 @@ name: Build
 on:
   workflow_dispatch:
     inputs:
-      project:
-        description: "Name of the project to build"
+      library:
+        description: "Name of the library to build"
         required: true
 
 jobs:
