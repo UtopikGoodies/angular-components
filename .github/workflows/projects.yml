@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - run: ls -la
 
@@ -24,27 +24,27 @@ jobs:
         with:
           github-token: ${{ secrets.WORKFLOW_TOKEN }}
           script: |
-            // const owner = context.repo.owner;
-            // const repo = context.repo.repo;
-            // const workflow_id = 'build';
-            // const ref = github.context.ref;
-            // const branchOrTag = ref.startsWith('refs/tags/') ? ref.replace('refs/tags/', '') : ref;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const workflow_id = 'build';
+            const ref = github.context.ref;
+            const branchOrTag = ref.startsWith('refs/tags/') ? ref.replace('refs/tags/', '') : ref;
 
-            // console.log(owner);
-            // console.log(repo);
-            // console.log(workflow_id);
-            // console.log(branchOrTag);
+            console.log(owner);
+            console.log(repo);
+            console.log(workflow_id);
+            console.log(branchOrTag);
 
             const fs = require('fs');
             const projects = JSON.parse(fs.readFileSync('./angular.json', 'utf8')).projects;
             const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
             console.log(libraries);
 
-            // for library in $libraries; do
-            //   github.rest.actions.createWorkflowDispatch({
-            //     owner,
-            //     repo,
-            //     workflow_id,
-            //     ref,
-            //   });
-            // done
+            for library in $libraries; do
+              github.rest.actions.createWorkflowDispatch({
+                owner,
+                repo,
+                workflow_id,
+                ref,
+              });
+            done
