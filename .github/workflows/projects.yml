@@ -25,8 +25,8 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const workflow_id = 'build';
-            const ref = github.event.ref || github.sha; // Fallback to github.sha if ref is not available
-            const branchOrTag = ref.startsWith('refs/tags/') ? ref.replace('refs/tags/', '') : ref;
+            // const ref = github.event.ref || github.sha; // Fallback to github.sha if ref is not available
+            // const branchOrTag = ref.startsWith('refs/tags/') ? ref.replace('refs/tags/', '') : ref;
 
             console.log(owner);
             console.log(repo);
@@ -42,7 +42,7 @@ jobs:
                 owner,
                 repo,
                 workflow_id,
-                branchOrTag,
+                github.ref_name,
                 inputs: {
                   library: library,
                 },
