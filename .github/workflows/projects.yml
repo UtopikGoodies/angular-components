@@ -33,18 +33,18 @@ jobs:
             console.log(workflow_id);
             console.log(github.ref_name);
 
-            const projects = require('./angular.json').projects;
-            const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
-            console.log(libraries);
+            // const projects = require('./angular.json').projects;
+            // const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
+            // console.log(libraries);
 
-            for (const library of libraries.split(' ')) {
-              await github.rest.actions.createWorkflowDispatch({
-                owner,
-                repo,
-                workflow_id,
-                github.ref_name,
-                inputs: {
-                  library: library,
-                },
-              });
-            }
+            // for (const library of libraries.split(' ')) {
+            //   await github.rest.actions.createWorkflowDispatch({
+            //     owner,
+            //     repo,
+            //     workflow_id,
+            //     github.ref_name,
+            //     inputs: {
+            //       library: library,
+            //     },
+            //   });
+            // }
