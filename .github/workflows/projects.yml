@@ -25,7 +25,7 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const workflow_id = 'build.yml';
-            
+
             let ref;
             if (github.event_name === 'pull_request') {
               ref = github.event.pull_request.head.ref;
