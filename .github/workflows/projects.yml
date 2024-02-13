@@ -17,15 +17,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - run: ls -la
-
       - name: Projects
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.WORKFLOW_TOKEN }}
           script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
+            const owner = github.context.repo.owner;
+            const repo = github.context.repo.repo;
             const workflow_id = 'build';
             const ref = github.context.ref;
             const branchOrTag = ref.startsWith('refs/tags/') ? ref.replace('refs/tags/', '') : ref;
@@ -39,7 +37,7 @@ jobs:
             const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
             console.log(libraries);
 
-            for (const library of libraries) {
+            for (const library of libraries.split(' ')) {
               await github.rest.actions.createWorkflowDispatch({
                 owner,
                 repo,
