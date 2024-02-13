@@ -1,0 +1,35 @@
+name: Projects
+
+on:
+  push:
+    tags: ["v*.*.*"]
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "projects/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Projects
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.WORKFLOW_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const workflow_id = 'build'
+            const ref = process.env.GITHUB_REF
+
+            libraries=$(node -pe "Object.keys(require('./angular.json').projects).filter(name => require('./angular.json').projects[name].projectType === 'library').join(' ')")
+            for library in $libraries; do
+              github.rest.actions.createWorkflowDispatch({
+                owner,
+                repo,
+                workflow_id,
+                ref,
+              });
+            done
