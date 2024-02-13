@@ -26,7 +26,7 @@ jobs:
             const repo = context.repo.repo;
             const workflow_id = 'build.yml';
 
-            console.log(context);
+            // console.debug(context);
 
             let ref;
             if (context.eventName === 'pull_request') {
@@ -42,16 +42,11 @@ jobs:
               ref = context.ref.startsWith('refs/tags/') ? context.ref.replace('refs/tags/', '') : context.ref;
             }
 
-            console.log(owner);
-            console.log(repo);
-            console.log(workflow_id);
-            console.log(ref);
-
             const projects = require('./angular.json').projects;
             const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
-            console.log(libraries);
 
             for (const library of libraries.split(' ')) {
+              console.log(`Trigger build for ${library}`)
               await github.rest.actions.createWorkflowDispatch({
                 owner,
                 repo,

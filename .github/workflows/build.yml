@@ -12,4 +12,113 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: echo ${{ inputs.project }}
+      - run: echo ${{ inputs.library }}
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Generate package meta
+        id: package-meta
+        run: |
+          # Use the version tag, if not use the PR id or the destination branch.
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            echo "registry=https://registry.npmjs.org" >> $GITHUB_OUTPUT
+            echo "secret=${{ secrets.NPM_TOKEN }}" >> $GITHUB_OUTPUT
+            echo "version=$(echo '${{ github.ref }}' | sed 's|refs/tags/v||')" >> $GITHUB_OUTPUT
+          else
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              VERSION_SUFFIX="-pr.${{ github.event.pull_request.number }}"
+            else
+              VERSION_SUFFIX=-$(basename "${{ github.ref }}")
+            fi
+            echo "registry=https://npm.pkg.github.com" >> $GITHUB_OUTPUT
+            echo "secret=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_OUTPUT
+            echo "version=0.0.0$VERSION_SUFFIX" >> $GITHUB_OUTPUT
+          fi
+
+          echo "scope=@$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+          echo "name=${{ inputs.library }}" >> $GITHUB_OUTPUT
+
+      # Setup the requirement for npm package
+      - name: Set up Node.js
+        uses: actions/setup-node@v4.0.1
+        with:
+          node-version: 18
+          registry-url: ${{ steps.package-meta.outputs.registry }}
+          scope: ${{ steps.package-meta.outputs.scope }}
+
+      # Install requirement and build the package.
+      - name: Build the package
+        run: yarn install
+      - run: npx ng build ${{ inputs.library }}
+
+      - name: Get the previous package id for the same package version
+        if: ${{ !(startsWith(github.ref, 'refs/tags/v')) }}
+        id: version-id
+        env:
+          PACKAGE_NAME: ${{ steps.package-meta.outputs.name }}
+          PACKAGE_VERSION: ${{ steps.package-meta.outputs.version }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const response = await github.rest.packages.getAllPackageVersionsForPackageOwnedByOrg({
+                org: context.repo.owner,
+                package_name: process.env.PACKAGE_NAME,
+                package_type: 'npm'
+              });
+              const version = response.data.find(v => v.name === process.env.PACKAGE_VERSION);
+              if (version && version.id) {
+                return version.id;
+              } else {
+                console.error('Version not found');
+                return 0;
+              }
+            } catch (error) {
+              if (error.status === 404) {
+                console.error('Package not found or access denied');
+                return 0;
+              } else {
+                throw error; // re-throw the error if it's not a 404
+              }
+            }
+
+      # Remove previous push of that version
+      - name: Delete package
+        if: ${{ !(startsWith(github.ref, 'refs/tags/v')) && steps.version-id.outputs.result != '0' }}
+        uses: actions/delete-package-versions@v4
+        with:
+          package-name: ${{ steps.package-meta.outputs.name }}
+          package-type: 'npm'
+          package-version-ids: ${{ steps.version-id.outputs.result }}
+
+      # Publish the package.
+      # If it's from a git tag, the package is published to npmjs.com and 
+      # the subversion name set as tag.
+      # If it's from a PR, the package is published to github and no tag is set.
+      # If none above, the package is published to github and the latest tag is set.
+      - name: Publish the package
+        run: |
+          # If git tag
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            TAG=$(echo '${{ github.ref }}' | sed -n 's/.*-\(.*\)\..*/\1/')
+            if [[ -z "$TAG" ]]; then
+              TAG='latest'
+            fi
+            npm publish ./dist/${{ inputs.library }} --access public --tag $TAG
+
+          # If Pull Request
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            npm publish ./dist/${{ inputs.library }} --access public --no-tag --verbose
+          
+          # If a push
+          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "main" ]]; then
+            npm publish ./dist/${{ inputs.library }} --access public --tag latest
+
+          # Whatever else
+          else
+            npm publish ./dist/${{ inputs.library }} --access public --tag $(basename "${{ github.ref }}")
+          fi
+
+        env:
+          NODE_AUTH_TOKEN: ${{ steps.package-meta.outputs.secret }}
