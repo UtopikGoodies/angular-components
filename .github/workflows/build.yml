@@ -23,7 +23,7 @@ jobs:
 
     - name: Build Angular Projects
       run: |
-        projects=$(node -pe "Object.keys(require('./angular.json').projects).join(' ')")
-        for project in $projects; do
-          npm run build $project
+        libraries=$(node -pe "Object.keys(require('./angular.json').projects).filter(name => require('./angular.json').projects[name].projectType === 'library').join(' ')")
+        for library in $libraries; do
+          npx ng build $library
         done
