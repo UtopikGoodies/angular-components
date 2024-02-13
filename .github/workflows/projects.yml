@@ -22,8 +22,7 @@ jobs:
         with:
           github-token: ${{ secrets.WORKFLOW_TOKEN }}
           script: |
-            const owner = github.context.repo.owner;
-            const repo = github.context.repo.repo;
+            const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
             const workflow_id = 'build';
             const ref = github.context.ref;
             const branchOrTag = ref.startsWith('refs/tags/') ? ref.replace('refs/tags/', '') : ref;
