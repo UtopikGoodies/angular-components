@@ -25,26 +25,26 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const workflow_id = 'build';
-            // const ref = github.event.ref || github.sha; // Fallback to github.sha if ref is not available
-            // const branchOrTag = ref.startsWith('refs/tags/') ? ref.replace('refs/tags/', '') : ref;
+            const ref = github.event.ref
+            const branchOrTag = ref.startsWith('refs/tags/') ? ref.replace('refs/tags/', '') : ref;
 
             console.log(owner);
             console.log(repo);
             console.log(workflow_id);
-            console.log(github.ref_name);
+            console.log(branchOrTag);
 
-            // const projects = require('./angular.json').projects;
-            // const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
-            // console.log(libraries);
+            const projects = require('./angular.json').projects;
+            const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
+            console.log(libraries);
 
-            // for (const library of libraries.split(' ')) {
-            //   await github.rest.actions.createWorkflowDispatch({
-            //     owner,
-            //     repo,
-            //     workflow_id,
-            //     github.ref_name,
-            //     inputs: {
-            //       library: library,
-            //     },
-            //   });
-            // }
+            for (const library of libraries.split(' ')) {
+              await github.rest.actions.createWorkflowDispatch({
+                owner,
+                repo,
+                workflow_id,
+                branchOrTag,
+                inputs: {
+                  library: library,
+                },
+              });
+            }
