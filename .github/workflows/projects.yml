@@ -31,6 +31,7 @@ jobs:
             console.log(owner);
             console.log(repo);
             console.log(workflow_id);
+            console.log(ref);
             console.log(branchOrTag);
 
             const projects = require('./angular.json').projects;
