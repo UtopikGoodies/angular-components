@@ -39,7 +39,7 @@ jobs:
               });
               ref = response.data.head.ref;
             } else {
-              // ref = context.ref.startsWith('refs/tags/') ? context.ref.replace('refs/tags/', '') : context.ref;
+              ref = context.ref.startsWith('refs/tags/') ? context.ref.replace('refs/tags/', '') : 'context.ref';
             }
 
             console.log(owner);
