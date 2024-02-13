@@ -32,7 +32,7 @@ jobs:
             console.log(branchOrTag);
 
             const projects = require('./angular.json').projects;
-            const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
+            const libraries = Object.keys(projects).filter(name => projects[name].projectType === "library").join(' ');
             console.log(libraries);
 
             for library in $libraries; do
