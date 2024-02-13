@@ -26,17 +26,17 @@ jobs:
             const repo = context.repo.repo;
             const workflow_id = 'build.yml';
             
-            let branchOrTag;
+            let ref;
             if (github.event_name === 'pull_request') {
-              branchOrTag = github.event.pull_request.head.ref;
+              ref = github.event.pull_request.head.ref;
             } else {
-              branchOrTag = github.context.ref.startsWith('refs/tags/') ? github.context.ref.replace('refs/tags/', '') : github.context.ref;
+              ref = github.context.ref.startsWith('refs/tags/') ? github.context.ref.replace('refs/tags/', '') : github.context.ref;
             }
 
             console.log(owner);
             console.log(repo);
             console.log(workflow_id);
-            console.log(branchOrTag);
+            console.log(ref);
 
             const projects = require('./angular.json').projects;
             const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
@@ -47,7 +47,7 @@ jobs:
                 owner,
                 repo,
                 workflow_id,
-                ref: branchOrTag,
+                ref,
                 inputs: {
                   library: library,
                 },
