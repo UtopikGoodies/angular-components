@@ -19,16 +19,16 @@ jobs:
         with:
           github-token: ${{ secrets.WORKFLOW_TOKEN }}
           script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const workflow_id = 'build';
-            const ref = github.context.ref;
-            const branchOrTag = ref.startsWith('refs/tags/') ? ref.replace('refs/tags/', '') : ref;
+            // const owner = context.repo.owner;
+            // const repo = context.repo.repo;
+            // const workflow_id = 'build';
+            // const ref = github.context.ref;
+            // const branchOrTag = ref.startsWith('refs/tags/') ? ref.replace('refs/tags/', '') : ref;
 
-            console.log(owner);
-            console.log(repo);
-            console.log(workflow_id);
-            console.log(branchOrTag);
+            // console.log(owner);
+            // console.log(repo);
+            // console.log(workflow_id);
+            // console.log(branchOrTag);
 
             const fs = require('fs');
             const projects = JSON.parse(fs.readFileSync('./angular.json', 'utf8')).projects;
