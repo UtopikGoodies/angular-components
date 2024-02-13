@@ -31,13 +31,15 @@ jobs:
             console.log(workflow_id);
             console.log(branchOrTag);
 
-            const libraries = $(node -pe "Object.keys(require('./angular.json').projects).filter(name => require('./angular.json').projects[name].projectType === 'library').join(' ')");
+            const projects = require('./angular.json').projects;
+            const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
+            console.log(libraries);
 
-            // for library in $libraries; do
-            //   github.rest.actions.createWorkflowDispatch({
-            //     owner,
-            //     repo,
-            //     workflow_id,
-            //     ref,
-            //   });
-            // done
+            for library in $libraries; do
+              github.rest.actions.createWorkflowDispatch({
+                owner,
+                repo,
+                workflow_id,
+                ref,
+              });
+            done
