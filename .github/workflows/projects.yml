@@ -24,10 +24,10 @@ jobs:
             const workflow_id = 'build';
             const ref = process.env.GITHUB_REF;
 
-            echo owner;
-            echo repo;
-            echo workflow_id;
-            echo ref;
+            console.log(owner);
+            console.log(repo);
+            console.log(workflow_id);
+            console.log(ref);
 
             # const libraries = $(node -pe "Object.keys(require('./angular.json').projects).filter(name => require('./angular.json').projects[name].projectType === 'library').join(' ')");
 
