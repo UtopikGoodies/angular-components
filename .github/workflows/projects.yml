@@ -26,9 +26,18 @@ jobs:
             const repo = context.repo.repo;
             const workflow_id = 'build.yml';
 
+
+
             let ref;
             if (github.event_name === 'pull_request') {
-              ref = github.event.pull_request.head.ref;
+              // Get the pull request details
+              const pullRequestNumber = github.event.pull_request.number;
+              const response = await github.rest.pulls.get({
+                owner,
+                repo,
+                pull_number: pullRequestNumber,
+              });
+              ref = response.data.head.ref;
             } else {
               ref = context.ref.startsWith('refs/tags/') ? context.ref.replace('refs/tags/', '') : context.ref;
             }
