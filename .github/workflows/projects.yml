@@ -24,7 +24,7 @@ jobs:
             const workflow_id = 'build';
             const ref = process.env.GITHUB_REF;
 
-            const libraries = $(node -pe "Object.keys(require('./angular.json').projects).filter(name => require('./angular.json').projects[name].projectType === 'library').join(' ')");
+            # const libraries = $(node -pe "Object.keys(require('./angular.json').projects).filter(name => require('./angular.json').projects[name].projectType === 'library').join(' ')");
 
             # for library in $libraries; do
             #   github.rest.actions.createWorkflowDispatch({
