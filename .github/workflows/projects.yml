@@ -44,7 +44,7 @@ jobs:
           # Get the reference based on the event type
           if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             pullRequestNumber=$GITHUB_EVENT_PULL_REQUEST_NUMBER
-            response=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+            response=$(curl -s -H "Authorization: Bearer ${{ secrets.WORKFLOW_TOKEN }}" \
               "https://api.github.com/repos/$owner/$repo/pulls/$pullRequestNumber")
             ref=$(echo "$response" | jq -r '.head.ref')
           else
@@ -60,7 +60,7 @@ jobs:
             library=$1
             echo "Trigger build for $library"
             curl -X POST \
-              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Authorization: Bearer ${{ secrets.WORKFLOW_TOKEN }}" \
               -H "Accept: application/vnd.github.v3+json" \
               "https://api.github.com/repos/$owner/$repo/actions/workflows/$workflow_id/dispatches" \
               -d "{\"ref\":\"$ref\", \"inputs\":{\"library\":\"$library\", \"registry\":\"${{ steps.package-meta.outputs.registry }}\", \"registry_secret\":\"${{ steps.package-meta.outputs.secret }}\", \"package_name\":\"$owner/$library\", \"package_version\":\"${{ steps.package-meta.outputs.version }}\"}}"
