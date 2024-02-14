@@ -47,7 +47,7 @@ jobs:
         with:
           node-version: 20
           registry-url: ${{ inputs.registry }}
-          scope: ${{ env.PACKAGE_SCOPE }}
+          scope: "@utopikgoodies"
 
       # Install requirement and build the package.
       - name: Build the package
