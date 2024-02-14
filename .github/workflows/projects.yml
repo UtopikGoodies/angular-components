@@ -48,8 +48,11 @@ jobs:
               "https://api.github.com/repos/$owner/$repo/pulls/$pullRequestNumber")
             ref=$(echo "$response" | jq -r '.head.ref')
           else
-            ref=${GITHUB_REF#refs/tags/}
-            ref=${GITHUB_REF#refs/heads/}
+            if [[ $GITHUB_REF == refs/tags/* ]]; then
+              ref=${GITHUB_REF#refs/tags/}
+            else
+              ref=${GITHUB_REF#refs/heads/}
+            fi
           fi
           
           # Get the list of libraries
