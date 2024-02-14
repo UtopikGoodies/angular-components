@@ -56,11 +56,15 @@ jobs:
       - name: Configure package
         run: |
           package_path=./projects/${{ inputs.library }}/package.json
-          jq '.name = "${{ inputs.package_name }}"' $package_path > tmp.json && mv tmp.json $package_path
-          jq '.version = "${{ inputs.package_version }}"' $package_path > tmp.json && mv tmp.json $package_path
-          jq '.repository = {"type": "git", "url": "git+https://github.com/${{ github.repository }}.git"}' $package_path > tmp.json && mv tmp.json $package_path
-          jq '.author = "${{ env.AUTHOR_NAME }} <${{ env.AUTHOR_EMAIL }}>"' $package_path > tmp.json && mv tmp.json $package_path
+          jq \
+            --arg owner "$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" \
+            --arg version "${{ inputs.package_version }}" \
+            --arg repo "git+https://github.com/${{ github.repository }}.git" \
+            --arg author "${{ env.AUTHOR_NAME }} <${{ env.AUTHOR_EMAIL }}>" \
+            '.name = "@\($owner)" | .version = $version | .repository = {"type": "git", "url": $repo} | .author = $author' \
+            "$package_path" > "$package_path.tmp" && mv "$package_path.tmp" "$package_path"
       - run: cat ./projects/${{ inputs.library }}/package.json
+
 
       # Install requirement and build the package.
       - name: Build the package
