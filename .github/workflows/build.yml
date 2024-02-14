@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: # ${{ inputs.library }}
+      - run: echo ${{ inputs.library }}
 
       - name: Checkout Repository
         uses: actions/checkout@v4
