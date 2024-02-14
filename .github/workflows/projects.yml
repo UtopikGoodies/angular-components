@@ -40,43 +40,37 @@ jobs:
         with:
           github-token: ${{ secrets.WORKFLOW_TOKEN }}
           script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const workflow_id = 'build.yml';
-
-            console.log(${{ steps.package-meta.outputs.registry }});
-
-            //let ref;
-            //if (context.eventName === 'pull_request') {
-            //  const pullRequestNumber = context.payload.pull_request.number;
-            //  const response = await github.rest.pulls.get({
-            //    owner,
-            //    repo,
-            //    pull_number: pullRequestNumber,
-            //  });
-            //  ref = response.data.head.ref;
-            //} else {
-            //  ref = context.ref.startsWith('refs/tags/') ? context.ref.replace('refs/tags/', '') : context.ref;
-            //}
-
-            //const projects = require('./angular.json').projects;
-            //const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
-
-            //console.log(${{ steps.package-meta.outputs.registry }});
-
-            // for (const library of libraries.split(' ')) {
-            //   console.log(`Trigger build for ${library}`);
-            //   await github.rest.actions.createWorkflowDispatch({
-            //     owner,
-            //     repo,
-            //     workflow_id,
-            //     ref,
-            //     inputs: {
-            //       library: library,
-            //       registry: ${{ steps.package-meta.outputs.registry }},
-            //       registry_secret: ${{ steps.package-meta.outputs.secret }},
-            //       package_name: `${owner}/${library}`,
-            //       package_version: ${{ steps.package-meta.outputs.version }}
-            //     },
-            //   });
-            // }
+            owner=$GITHUB_REPOSITORY_OWNER
+            repo=$GITHUB_REPOSITORY
+            workflow_id='build.yml'
+            
+            # Get the reference based on the event type
+            if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+              pullRequestNumber=$GITHUB_EVENT_PULL_REQUEST_NUMBER
+              response=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+                "https://api.github.com/repos/$owner/$repo/pulls/$pullRequestNumber")
+              ref=$(echo "$response" | jq -r '.head.ref')
+            else
+              ref=${GITHUB_REF#refs/tags/}
+              ref=${GITHUB_REF#refs/heads/}
+            fi
+            
+            # Get the list of libraries
+            projects=$(cat angular.json | jq -r '.projects | keys | .[]')
+            
+            # Function to trigger workflow for a library
+            trigger_workflow() {
+              library=$1
+              echo "Trigger build for $library"
+              curl -X POST \
+                -H "Authorization: Bearer $GITHUB_TOKEN" \
+                -H "Accept: application/vnd.github.v3+json" \
+                "https://api.github.com/repos/$owner/$repo/actions/workflows/$workflow_id/dispatches" \
+                -d '{"ref":"'"$ref"'", "inputs":{"library":"'"$library"'", "registry":"'"${{ steps.package-meta.outputs.registry }}"'", "registry_secret":"'"${{ steps.package-meta.outputs.secret }}"'", "package_name":"'"$owner/$library"'", "package_version":"'"${{ steps.package-meta.outputs.version }}'"}}'
+            }
+            
+            # Loop through libraries and trigger workflow
+            for library in $projects; do
+              trigger_workflow $library
+            done
+            
