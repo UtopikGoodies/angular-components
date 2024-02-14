@@ -73,8 +73,8 @@ jobs:
                 ref,
                 inputs: {
                   library: library,
-                  registry: ${{ steps.package-meta.outputs.registry }}
-                  registry_secret: ${{ steps.package-meta.outputs.secret }}
+                  registry: ${{ steps.package-meta.outputs.registry }},
+                  registry_secret: ${{ steps.package-meta.outputs.secret }},
                   package_name: ${{ github.repository_owner }}/library,
                   package_version: ${{ steps.package-meta.outputs.version }}
                 },
