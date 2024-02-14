@@ -75,7 +75,7 @@ jobs:
                   library: library,
                   registry: ${{ steps.package-meta.outputs.registry }},
                   registry_secret: ${{ steps.package-meta.outputs.secret }},
-                  package_name: owner/library,
+                  package_name: `${owner}/${library}`,
                   package_version: ${{ steps.package-meta.outputs.version }}
                 },
               });
