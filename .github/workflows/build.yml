@@ -49,7 +49,7 @@ jobs:
           registry-url: ${{ inputs.registry }}
           scope: "@utopikgoodies"
 
-      - run: env
+      - run: cat ${{ env.NPM_CONFIG_USERCONFIG }}
 
       # Install requirement and build the package.
       - name: Build the package
