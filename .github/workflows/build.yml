@@ -103,10 +103,6 @@ jobs:
       # If it's from a PR, the package is published to github and no tag is set.
       # If none above, the package is published to github and the latest tag is set.
       - name: Publish the package
-        env:
-          NODE_AUTH_TOKEN: ${{ inputs.registry_secret }}
-          PACKAGE_NAME: ${{ inputs.package_name }}
-          PACKAGE_VERSION: ${{ inputs.package_version }}
         run: |
           TAG="${{ inputs.package_tag }}"
           if [[ -z "$TAG" ]]; then
@@ -117,3 +113,9 @@ jobs:
           fi
 
           npm publish ./dist/${{ inputs.library }} --access public --tag $TAG --verbose
+
+        env:
+          NODE_AUTH_TOKEN: ${{ inputs.registry_secret }}
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          PACKAGE_VERSION: ${{ inputs.package_version }}
+          
