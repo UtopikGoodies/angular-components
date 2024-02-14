@@ -27,7 +27,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: echo ${{ inputs.library }}
+      - run: |
+          echo ${{ inputs.library }}
+          echo ${{ inputs.registry }}
+          echo ${{ inputs.registry_secret }}
+          echo ${{ inputs.package_name }}
+          echo ${{ inputs.package_version }}
+          echo ${{ inputs.package_tag }}
 
       - name: Checkout Repository
         uses: actions/checkout@v4
