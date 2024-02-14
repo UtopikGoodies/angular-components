@@ -61,7 +61,7 @@ jobs:
             --arg version "${{ inputs.package_version }}" \
             --arg repo "git+https://github.com/${{ github.repository }}.git" \
             --arg author "${{ env.AUTHOR_NAME }} <${{ env.AUTHOR_EMAIL }}>" \
-            '.name = "@\($owner)" | .version = $version | .repository = {"type": "git", "url": $repo} | .author = $author' \
+            '.name = "@\($owner)/${GITHUB_REPOSITORY#*/}" | .version = $version | .repository = {"type": "git", "url": $repo} | .author = $author' \
             "$package_path" > "$package_path.tmp" && mv "$package_path.tmp" "$package_path"
       - run: cat ./projects/${{ inputs.library }}/package.json
 
