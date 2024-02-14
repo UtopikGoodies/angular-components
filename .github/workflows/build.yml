@@ -130,4 +130,4 @@ jobs:
           npm publish --access public --tag $TAG --verbose
 
         env:
-          NODE_AUTH_TOKEN: ${{ inputs.registry_secret }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
