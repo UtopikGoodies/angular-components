@@ -71,7 +71,7 @@ jobs:
               -H "Authorization: Bearer ${{ secrets.WORKFLOW_TOKEN }}" \
               -H "Accept: application/vnd.github.v3+json" \
               "https://api.github.com/repos/$repo/actions/workflows/$workflow_id/dispatches" \
-              -d "{\"ref\":\"$ref\", \"inputs\":{\"library\":\"$library\", \"registry\":\"${{ steps.package-meta.outputs.registry }}\", \"registry_secret\":\"${{ steps.package-meta.outputs.secret }}\", \"package_scope\":\"@$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')\", \"package_name\":\"$owner/$library\", \"package_version\":\"${{ steps.package-meta.outputs.version }}\"}")
+              -d "{\"ref\":\"$ref\", \"inputs\":{\"library\":\"$library\", \"registry\":\"${{ steps.package-meta.outputs.registry }}\", \"registry_secret\":\"${{ steps.package-meta.outputs.secret }}\", \"package_scope\":\"@$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')\", \"package_name\":\"@$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/$library\", \"package_version\":\"${{ steps.package-meta.outputs.version }}\"}")
             
             # Check if the HTTP status code is not in the 2xx range
             if [[ "${response:${#response}-3}" != "204" ]]; then
