@@ -31,11 +31,14 @@ jobs:
 
       # Setup the requirement for npm package
       - name: Set up Node.js
+        env:
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          PACKAGE_SCOPE: ${package_name%%/*}
         uses: actions/setup-node@v4.0.1
         with:
           node-version: 20
           registry-url: ${{ inputs.registry }}
-          # scope: ${{ steps.package-meta.outputs.scope }}
+          scope: ${{ env.PACKAGE_SCOPE }}
 
       # Install requirement and build the package.
       - name: Build the package
