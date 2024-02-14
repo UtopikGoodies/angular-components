@@ -52,11 +52,6 @@ jobs:
           registry-url: ${{ inputs.registry }}
           scope: ${{ inputs.package_scope }}
 
-      # Install requirement and build the package.
-      - name: Build the package
-        run: yarn install
-      - run: npx ng build ${{ inputs.library }}
-
       # Add information to the package configuration.
       - name: Configure package
         run: |
@@ -66,6 +61,11 @@ jobs:
           jq '.repository = {"type": "git", "url": "git+https://github.com/${{ github.repository }}.git"}' $package_path > tmp.json && mv tmp.json $package_path
           jq '.author = "${{ env.AUTHOR_NAME }} <${{ env.AUTHOR_EMAIL }}>"' $package_path > tmp.json && mv tmp.json $package_path
       - run: cat ./projects/${{ inputs.library }}/package.json
+
+      # Install requirement and build the package.
+      - name: Build the package
+        run: yarn install
+      - run: npx ng build ${{ inputs.library }}
 
       - name: Get the previous package id for the same package version
         if: ${{ !(startsWith(github.ref, 'refs/tags/v')) }}
@@ -127,4 +127,3 @@ jobs:
 
         env:
           NODE_AUTH_TOKEN: ${{ inputs.registry_secret }}
-          
