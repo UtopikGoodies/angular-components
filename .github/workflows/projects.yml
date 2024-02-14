@@ -44,7 +44,7 @@ jobs:
           # Get the reference based on the event type
           if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             pullRequestNumber=$GITHUB_EVENT_PULL_REQUEST_NUMBER
-            response=$(curl -s -H "Authorization: Bearer ${{ secrets.WORKFLOW_TOKEN }}" \
+            response=$(curl -v -s -H "Authorization: Bearer ${{ secrets.WORKFLOW_TOKEN }}" \
               "https://api.github.com/repos/$owner/$repo/pulls/$pullRequestNumber")
             ref=$(echo "$response" | jq -r '.head.ref')
           else
@@ -59,11 +59,17 @@ jobs:
           trigger_workflow() {
             library=$1
             echo "Trigger build for $library"
-            curl -X POST \
+            response=$(curl -s -w "%{http_code}" -v -X POST \
               -H "Authorization: Bearer ${{ secrets.WORKFLOW_TOKEN }}" \
               -H "Accept: application/vnd.github.v3+json" \
               "https://api.github.com/repos/$owner/$repo/actions/workflows/$workflow_id/dispatches" \
-              -d "{\"ref\":\"$ref\", \"inputs\":{\"library\":\"$library\", \"registry\":\"${{ steps.package-meta.outputs.registry }}\", \"registry_secret\":\"${{ steps.package-meta.outputs.secret }}\", \"package_name\":\"$owner/$library\", \"package_version\":\"${{ steps.package-meta.outputs.version }}\"}}"
+              -d "{\"ref\":\"$ref\", \"inputs\":{\"library\":\"$library\", \"registry\":\"${{ steps.package-meta.outputs.registry }}\", \"registry_secret\":\"${{ steps.package-meta.outputs.secret }}\", \"package_name\":\"$owner/$library\", \"package_version\":\"${{ steps.package-meta.outputs.version }}\"}")
+          
+            # Check if the HTTP status code is not in the 2xx range
+            if [[ "${response:${#response}-3}" != "200" ]]; then
+              echo "Failed to trigger workflow for $library. HTTP status code: ${response:${#response}-3}"
+              exit 1
+            fi
           }
           
           # Loop through libraries and trigger workflow
