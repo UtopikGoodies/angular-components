@@ -60,7 +60,7 @@ jobs:
             const projects = require('./angular.json').projects;
             const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
 
-            for (const library of libraries.split(' ')) {
+            async function triggerWorkflow(library) {
               console.log(`Trigger build for ${library}`);
               await github.rest.actions.createWorkflowDispatch({
                 owner,
@@ -75,4 +75,8 @@ jobs:
                   package_version: ${{ steps.package-meta.outputs.version }}
                 },
               });
+            }
+
+            for (const library of libraries.split(' ')) {
+              await triggerWorkflow(library);
             }
