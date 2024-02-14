@@ -44,25 +44,25 @@ jobs:
             const repo = context.repo.repo;
             const workflow_id = 'build.yml';
 
-            let ref;
-            if (context.eventName === 'pull_request') {
-              const pullRequestNumber = context.payload.pull_request.number;
-              const response = await github.rest.pulls.get({
-                owner,
-                repo,
-                pull_number: pullRequestNumber,
-              });
-              ref = response.data.head.ref;
-            } else {
-              ref = context.ref.startsWith('refs/tags/') ? context.ref.replace('refs/tags/', '') : context.ref;
-            }
-
-            const projects = require('./angular.json').projects;
-            const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
-
             console.log(${{ steps.package-meta.outputs.registry }});
-            console.log(${{ steps.package-meta.outputs.secret  }});
-            console.log(${{ steps.package-meta.outputs.version }});
+
+            //let ref;
+            //if (context.eventName === 'pull_request') {
+            //  const pullRequestNumber = context.payload.pull_request.number;
+            //  const response = await github.rest.pulls.get({
+            //    owner,
+            //    repo,
+            //    pull_number: pullRequestNumber,
+            //  });
+            //  ref = response.data.head.ref;
+            //} else {
+            //  ref = context.ref.startsWith('refs/tags/') ? context.ref.replace('refs/tags/', '') : context.ref;
+            //}
+
+            //const projects = require('./angular.json').projects;
+            //const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
+
+            //console.log(${{ steps.package-meta.outputs.registry }});
 
             // for (const library of libraries.split(' ')) {
             //   console.log(`Trigger build for ${library}`);
