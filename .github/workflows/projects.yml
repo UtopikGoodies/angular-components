@@ -20,7 +20,6 @@ jobs:
       - name: Generate package meta
         id: package-meta
         run: |
-          # Use the version tag, if not use the PR id or the destination branch.
           if [[ $GITHUB_REF == refs/tags/v* ]]; then
             echo "registry=https://registry.npmjs.org" >> $GITHUB_OUTPUT
             echo "secret=${{ secrets.NPM_TOKEN }}" >> $GITHUB_OUTPUT
@@ -45,11 +44,8 @@ jobs:
             const repo = context.repo.repo;
             const workflow_id = 'build.yml';
 
-            // console.debug(context);
-
             let ref;
             if (context.eventName === 'pull_request') {
-              // Get the pull request details
               const pullRequestNumber = context.payload.pull_request.number;
               const response = await github.rest.pulls.get({
                 owner,
@@ -65,7 +61,7 @@ jobs:
             const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
 
             for (const library of libraries.split(' ')) {
-              console.log(`Trigger build for ${library}`)
+              console.log(`Trigger build for ${library}`);
               await github.rest.actions.createWorkflowDispatch({
                 owner,
                 repo,
