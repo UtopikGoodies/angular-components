@@ -4,7 +4,18 @@ on:
   workflow_dispatch:
     inputs:
       library:
-        description: "Name of the library to build"
+        description: Name of the library to build
+        required: true
+      registry:
+        description: NPM Registry
+        required: true
+      registry_secret:
+        description: 
+      package_name:
+        description: NPM Package name
+        required: true
+      package_version:
+        description: NPM Package version
         required: true
 
 jobs:
@@ -12,40 +23,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: echo ${{ inputs.library }}
+      - run: # ${{ inputs.library }}
 
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Generate package meta
-        id: package-meta
-        run: |
-          # Use the version tag, if not use the PR id or the destination branch.
-          if [[ $GITHUB_REF == refs/tags/v* ]]; then
-            echo "registry=https://registry.npmjs.org" >> $GITHUB_OUTPUT
-            echo "secret=${{ secrets.NPM_TOKEN }}" >> $GITHUB_OUTPUT
-            echo "version=$(echo '${{ github.ref }}' | sed 's|refs/tags/v||')" >> $GITHUB_OUTPUT
-          else
-            if [ "${{ github.event_name }}" = "pull_request" ]; then
-              VERSION_SUFFIX="-pr.${{ github.event.pull_request.number }}"
-            else
-              VERSION_SUFFIX=-$(basename "${{ github.ref }}")
-            fi
-            echo "registry=https://npm.pkg.github.com" >> $GITHUB_OUTPUT
-            echo "secret=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_OUTPUT
-            echo "version=0.0.0$VERSION_SUFFIX" >> $GITHUB_OUTPUT
-          fi
-
-          echo "scope=@$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
-          echo "name=${{ inputs.library }}" >> $GITHUB_OUTPUT
 
       # Setup the requirement for npm package
       - name: Set up Node.js
         uses: actions/setup-node@v4.0.1
         with:
-          node-version: 18
-          registry-url: ${{ steps.package-meta.outputs.registry }}
-          scope: ${{ steps.package-meta.outputs.scope }}
+          node-version: 20
+          registry-url: ${{ inputs.registry }}
+          # scope: ${{ steps.package-meta.outputs.scope }}
 
       # Install requirement and build the package.
       - name: Build the package
@@ -56,8 +45,8 @@ jobs:
         if: ${{ !(startsWith(github.ref, 'refs/tags/v')) }}
         id: version-id
         env:
-          PACKAGE_NAME: ${{ steps.package-meta.outputs.name }}
-          PACKAGE_VERSION: ${{ steps.package-meta.outputs.version }}
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          PACKAGE_VERSION: ${{ inputs.package_version }}
         uses: actions/github-script@v7
         with:
           script: |
@@ -88,7 +77,7 @@ jobs:
         if: ${{ !(startsWith(github.ref, 'refs/tags/v')) && steps.version-id.outputs.result != '0' }}
         uses: actions/delete-package-versions@v4
         with:
-          package-name: ${{ steps.package-meta.outputs.name }}
+          package-name: ${{ inputs.package_name }}
           package-type: 'npm'
           package-version-ids: ${{ steps.version-id.outputs.result }}
 
@@ -121,4 +110,4 @@ jobs:
           fi
 
         env:
-          NODE_AUTH_TOKEN: ${{ steps.package-meta.outputs.secret }}
+          NODE_AUTH_TOKEN: ${{ inputs.registry_secret }}

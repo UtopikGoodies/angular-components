@@ -17,6 +17,25 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Generate package meta
+        id: package-meta
+        run: |
+          # Use the version tag, if not use the PR id or the destination branch.
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            echo "registry=https://registry.npmjs.org" >> $GITHUB_OUTPUT
+            echo "secret=${{ secrets.NPM_TOKEN }}" >> $GITHUB_OUTPUT
+            echo "version=$(echo '${{ github.ref }}' | sed 's|refs/tags/v||')" >> $GITHUB_OUTPUT
+          else
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              VERSION_SUFFIX="-pr.${{ github.event.pull_request.number }}"
+            else
+              VERSION_SUFFIX=-$(basename "${{ github.ref }}")
+            fi
+            echo "registry=https://npm.pkg.github.com" >> $GITHUB_OUTPUT
+            echo "secret=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_OUTPUT
+            echo "version=0.0.0$VERSION_SUFFIX" >> $GITHUB_OUTPUT
+          fi
+
       - name: Projects
         uses: actions/github-script@v7
         with:
@@ -54,6 +73,10 @@ jobs:
                 ref,
                 inputs: {
                   library: library,
+                  registry: ${{ steps.package-meta.outputs.registry }}
+                  registry_secret: ${{ steps.package-meta.outputs.secret }}
+                  package_name: ${{ github.repository_owner }}/library,
+                  package_version: ${{ steps.package-meta.outputs.version }}
                 },
               });
             }
