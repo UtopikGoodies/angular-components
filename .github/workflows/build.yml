@@ -45,9 +45,11 @@ jobs:
           PACKAGE_SCOPE: ${package_name%%/*}
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           registry-url: ${{ inputs.registry }}
           scope: "@utopikgoodies"
+
+      - run: env
 
       # Install requirement and build the package.
       - name: Build the package
