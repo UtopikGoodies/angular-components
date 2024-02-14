@@ -43,7 +43,7 @@ jobs:
         env:
           PACKAGE_NAME: ${{ inputs.package_name }}
           PACKAGE_SCOPE: ${package_name%%/*}
-        uses: actions/setup-node@v4.0.1
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: ${{ inputs.registry }}
@@ -100,8 +100,9 @@ jobs:
       # If it's from a PR, the package is published to github and no tag is set.
       # If none above, the package is published to github and the latest tag is set.
       - name: Publish the package
-        run: |
-          TAG=$(echo '${{ inputs.package_tag }}' | sed -n 's/.*-\(.*\)\..*/\1/')
+        run: cat .npmrc
+      - run: |
+          TAG=$(echo '${{ inputs.package_tag }}' | sed -n 's/.*-\(.*\)\..*/\1/p')
           if [[ -z "$TAG" ]]; then
             TAG='latest'
           fi
