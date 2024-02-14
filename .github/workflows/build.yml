@@ -10,7 +10,8 @@ on:
         description: NPM Registry
         required: true
       registry_secret:
-        description: 
+        description: NPM Registry secret
+        required: true  
       package_name:
         description: NPM Package name
         required: true
