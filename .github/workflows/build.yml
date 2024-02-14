@@ -100,8 +100,7 @@ jobs:
       # If it's from a PR, the package is published to github and no tag is set.
       # If none above, the package is published to github and the latest tag is set.
       - name: Publish the package
-        run: cat .npmrc
-      - run: |
+        run: |
           TAG=$(echo '${{ inputs.package_tag }}' | sed -n 's/.*-\(.*\)\..*/\1/p')
           if [[ -z "$TAG" ]]; then
             TAG='latest'
