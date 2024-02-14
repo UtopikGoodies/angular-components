@@ -122,7 +122,9 @@ jobs:
             fi
           fi
 
-          npm publish ./dist/${{ inputs.library }} --access public --tag $TAG --verbose
+          cd ./dist/${{ inputs.library }}
+          npm publish --access public --tag $TAG --verbose
 
         env:
           NODE_AUTH_TOKEN: ${{ inputs.registry_secret }}
+          
