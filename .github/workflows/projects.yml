@@ -44,7 +44,7 @@ jobs:
           # Get the reference based on the event type
           if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             pullRequestNumber=$GITHUB_EVENT_PULL_REQUEST_NUMBER
-            response=$(curl -s -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.WORKFLOW_TOKEN }}" \
+            response=$(curl -v -s -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.WORKFLOW_TOKEN }}" \
               "https://api.github.com/repos/$repo/pulls/$pullRequestNumber")
             status_code=${response:${#response}-3}
             echo "$response"
