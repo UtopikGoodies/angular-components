@@ -18,6 +18,9 @@ on:
       package_version:
         description: NPM Package version
         required: true
+      package_tag:
+        description: NPM Package tag
+        required: false
 
 jobs:
   build:
@@ -92,26 +95,12 @@ jobs:
       # If none above, the package is published to github and the latest tag is set.
       - name: Publish the package
         run: |
-          # If git tag
-          if [[ $GITHUB_REF == refs/tags/v* ]]; then
-            TAG=$(echo '${{ github.ref }}' | sed -n 's/.*-\(.*\)\..*/\1/')
-            if [[ -z "$TAG" ]]; then
-              TAG='latest'
-            fi
-            npm publish ./dist/${{ inputs.library }} --access public --tag $TAG
-
-          # If Pull Request
-          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            npm publish ./dist/${{ inputs.library }} --access public --no-tag --verbose
-          
-          # If a push
-          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "main" ]]; then
-            npm publish ./dist/${{ inputs.library }} --access public --tag latest
-
-          # Whatever else
-          else
-            npm publish ./dist/${{ inputs.library }} --access public --tag $(basename "${{ github.ref }}")
+          TAG=$(echo '${{ inputs.package_tag }}' | sed -n 's/.*-\(.*\)\..*/\1/')
+          if [[ -z "$TAG" ]]; then
+            TAG='latest'
           fi
+
+          npm publish ./dist/${{ inputs.library }} --access public --tag $TAG --verbose
 
         env:
           NODE_AUTH_TOKEN: ${{ inputs.registry_secret }}
