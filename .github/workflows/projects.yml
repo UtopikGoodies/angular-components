@@ -44,7 +44,7 @@ jobs:
           # Get the reference based on the event type
           if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             pullRequestNumber=$GITHUB_EVENT_PULL_REQUEST_NUMBER
-            response=$(curl -s -w "%{http_code}" -v -H "Authorization: Bearer ${{ secrets.WORKFLOW_TOKEN }}" \
+            response=$(curl -s -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.WORKFLOW_TOKEN }}" \
               "https://api.github.com/repos/$repo/pulls/$pullRequestNumber")
             status_code=${response:${#response}-3}
             echo "$response"
@@ -70,7 +70,7 @@ jobs:
           trigger_workflow() {
             library=$1
             echo "Trigger build for $library"
-            response=$(curl -s -w "%{http_code}" -v -X POST \
+            response=$(curl -s -w "%{http_code}" -X POST \
               -H "Authorization: Bearer ${{ secrets.WORKFLOW_TOKEN }}" \
               -H "Accept: application/vnd.github.v3+json" \
               "https://api.github.com/repos/$repo/actions/workflows/$workflow_id/dispatches" \
