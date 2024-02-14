@@ -60,15 +60,23 @@ jobs:
             const projects = require('./angular.json').projects;
             const libraries = Object.keys(projects).filter(name => projects[name].projectType === 'library').join(' ');
 
-            for (const library of libraries.split(' ')) {
-              console.log(`Trigger build for ${library}`);
-              await github.rest.actions.createWorkflowDispatch({
-                owner,
-                repo,
-                workflow_id,
-                ref,
-                inputs: {
-                  library: library,
-                },
-              });
-            }
+            console.log(${{ steps.package-meta.outputs.registry }});
+            console.log(${{ steps.package-meta.outputs.secret  }});
+            console.log(${{ steps.package-meta.outputs.version }});
+
+            // for (const library of libraries.split(' ')) {
+            //   console.log(`Trigger build for ${library}`);
+            //   await github.rest.actions.createWorkflowDispatch({
+            //     owner,
+            //     repo,
+            //     workflow_id,
+            //     ref,
+            //     inputs: {
+            //       library: library,
+            //       registry: ${{ steps.package-meta.outputs.registry }},
+            //       registry_secret: ${{ steps.package-meta.outputs.secret }},
+            //       package_name: `${owner}/${library}`,
+            //       package_version: ${{ steps.package-meta.outputs.version }}
+            //     },
+            //   });
+            // }
