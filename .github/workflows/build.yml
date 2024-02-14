@@ -11,7 +11,10 @@ on:
         required: true
       registry_secret:
         description: NPM Registry secret
-        required: true  
+        required: true
+      package_scope:
+        description: Package scope
+        required: true
       package_name:
         description: NPM Package name
         required: true
@@ -47,9 +50,7 @@ jobs:
         with:
           node-version: 20
           registry-url: ${{ inputs.registry }}
-          scope: "@utopikgoodies"
-
-      - run: cat ${{ env.NPM_CONFIG_USERCONFIG }}
+          scope: ${{ inputs.package_scope }}
 
       # Install requirement and build the package.
       - name: Build the package
@@ -93,19 +94,25 @@ jobs:
         uses: actions/delete-package-versions@v4
         with:
           package-name: ${{ inputs.package_name }}
-          package-type: 'npm'
+          package-type: "npm"
           package-version-ids: ${{ steps.version-id.outputs.result }}
 
+
+      - run: cat ${{ env.NPM_CONFIG_USERCONFIG }}
+      
       # Publish the package.
-      # If it's from a git tag, the package is published to npmjs.com and 
+      # If it's from a git tag, the package is published to npmjs.com and
       # the subversion name set as tag.
       # If it's from a PR, the package is published to github and no tag is set.
       # If none above, the package is published to github and the latest tag is set.
       - name: Publish the package
         run: |
-          TAG=$(echo '${{ inputs.package_tag }}' | sed -n 's/.*-\(.*\)\..*/\1/p')
+          TAG="${{ inputs.package_tag }}"
           if [[ -z "$TAG" ]]; then
-            TAG='latest'
+            TAG=$(echo '${{ inputs.package_version }}' | sed -n 's/.*-\(.*\)\..*/\1/p')
+            if [[ -z "$TAG" ]]; then
+              TAG='latest'
+            fi
           fi
 
           npm publish ./dist/${{ inputs.library }} --access public --tag $TAG --verbose
