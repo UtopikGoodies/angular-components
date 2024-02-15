@@ -86,7 +86,7 @@ jobs:
         id: version-id
         run: |
           ORG=${{ github.repository_owner }}
-          PACKAGE_NAME=${{ inputs.package_name }}
+          PACKAGE_NAME=${{ inputs.library }}
           PACKAGE_VERSION=${{ inputs.package_version }}
           
           response=$(curl -v -s -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
