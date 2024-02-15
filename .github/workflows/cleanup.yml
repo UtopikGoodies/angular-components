@@ -1,11 +1,11 @@
 name: Clean Up
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ "main" ]
 
 jobs:
   clean-up:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read

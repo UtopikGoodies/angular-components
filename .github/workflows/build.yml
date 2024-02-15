@@ -30,7 +30,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: |
+      - name: Show Inputs values
+        if: ${{ env.ACTIONS_STEP_DEBUG  == 'true' }}
+        run: |
           echo ${{ inputs.library }}
           echo ${{ inputs.registry }}
           echo ${{ inputs.registry_secret }}
@@ -40,6 +42,11 @@ jobs:
 
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Generate README
+        run: |
+          project_name=$(echo "${{ inputs.library }}" | sed -e 's/-/ /g' -e "s/\b\(.\)/\u\1/g")
+          echo -e "# $project_name\nThe sources for this package are in the main [$project_name](https://github.com/${{ env.GITHUB_REPOSITORY }}) repo. Please file issues and pull requests against that repo." >> README.md
 
       # Setup the requirement for npm package
       - name: Set up Node.js
@@ -64,7 +71,10 @@ jobs:
             --arg name "${{ inputs.package_name }}" \
             '.name = $name | .version = $version | .repository = {"type": "git", "url": $repo} | .author = $author' \
             "$package_path" > "$package_path.tmp" && mv "$package_path.tmp" "$package_path"
-      - run: cat ./projects/${{ inputs.library }}/package.json
+
+      - name: Show package.json values
+        if: ${{ env.ACTIONS_STEP_DEBUG  == 'true' }}
+        run: cat ./projects/${{ inputs.library }}/package.json
 
       # Install requirement and build the package.
       - name: Build the package
