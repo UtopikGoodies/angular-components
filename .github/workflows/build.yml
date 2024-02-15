@@ -92,8 +92,6 @@ jobs:
           response=$(curl -s -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/orgs/${ORG}/packages/npm/${PACKAGE_NAME}/versions")
           
-          echo "$response"
-
           # Extract HTTP status code
           status_code="${response: -3}"
           
@@ -119,6 +117,11 @@ jobs:
             echo "VERSION_ID=0" >> $GITHUB_ENV
           fi
       
+      - name: Debug Info
+        run: |
+          echo "github.ref: ${{ github.ref }}"
+          echo "steps.version-id.outputs.result: ${{ steps.version-id.outputs.result }}"
+
       # Remove previous push of that version
       - name: Delete package
         if: ${{ !(startsWith(github.ref, 'refs/tags/v')) && steps.version-id.outputs.result != '0' }}
