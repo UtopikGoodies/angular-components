@@ -89,32 +89,34 @@ jobs:
           PACKAGE_NAME=${{ inputs.package_name }}
           PACKAGE_VERSION=${{ inputs.package_version }}
           
-          response=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          response=$(curl -v -s -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/orgs/${ORG}/packages/npm/${PACKAGE_NAME}/versions")
-      
+          
+          # Extract HTTP status code
+          status_code="${response: -3}"
+          
           # Check if the request was successful (status code 2xx)
-          if [[ $(curl -o /dev/null -w "%{http_code}" -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/orgs/${ORG}/packages/npm/${PACKAGE_NAME}/versions") -eq 200 ]]; then
-      
+          if [[ $status_code -eq 200 ]]; then
+            # Fetch response body
+            response_body=$(echo "${response}" | sed '$s/...$//')
+          
             # Parse JSON response with jq to find the version ID
-            version_id=$(echo "${response}" | jq -r --arg PACKAGE_VERSION "${PACKAGE_VERSION}" \
+            version_id=$(echo "${response_body}" | jq -r --arg PACKAGE_VERSION "${PACKAGE_VERSION}" \
               '.[] | select(.version == $PACKAGE_VERSION) | .id')
-      
+          
             # Check if version_id is not empty
             if [[ -n "${version_id}" ]]; then
               echo "Version ID found: ${version_id}"
-              echo "::set-output name=version-id::${version_id}"
+              echo "VERSION_ID=${version_id}" >> $GITHUB_ENV
             else
               echo "Version not found"
-              echo "::set-output name=version-id::0"
+              echo "VERSION_ID=0" >> $GITHUB_ENV
             fi
-      
           else
             echo "Package not found or access denied"
-            echo "::set-output name=version-id::0"
+            echo "VERSION_ID=0" >> $GITHUB_ENV
           fi
-    
-
+      
       # Remove previous push of that version
       - name: Delete package
         if: ${{ !(startsWith(github.ref, 'refs/tags/v')) && steps.version-id.outputs.result != '0' }}
