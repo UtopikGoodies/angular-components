@@ -6,9 +6,6 @@
     "paths": {
       "dynamic-form": [
         "./dist/dynamic-form"
-      ],
-      "form": [
-        "./dist/form"
       ]
     },
     "forceConsistentCasingInFileNames": true,

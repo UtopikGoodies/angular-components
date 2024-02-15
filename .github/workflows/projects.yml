@@ -1,0 +1,86 @@
+name: Projects
+
+on:
+  push:
+    tags: ["v*.*.*"]
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "projects/**"
+
+jobs:
+  projects:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Generate package meta
+        id: package-meta
+        run: |
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            echo "registry=https://registry.npmjs.org" >> $GITHUB_OUTPUT
+            echo "secret=${{ secrets.NPM_TOKEN }}" >> $GITHUB_OUTPUT
+            echo "version=$(echo '${{ github.ref }}' | sed 's|refs/tags/v||')" >> $GITHUB_OUTPUT
+          else
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              VERSION_SUFFIX="-pr.${{ github.event.pull_request.number }}"
+            else
+              VERSION_SUFFIX=-$(basename "${{ github.ref }}")
+            fi
+            echo "registry=https://npm.pkg.github.com" >> $GITHUB_OUTPUT
+            echo "secret=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_OUTPUT
+            echo "version=0.0.0$VERSION_SUFFIX" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Projects
+        run: |
+          owner=$GITHUB_REPOSITORY_OWNER
+          repo=$GITHUB_REPOSITORY
+          workflow_id='build.yml'
+          
+          # Get the reference based on the event type
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            echo "This is a pull request event"
+            if [[ -n "$GITHUB_HEAD_REF" ]]; then
+              echo "Head Ref: $GITHUB_HEAD_REF"
+              ref=$GITHUB_HEAD_REF
+            else
+              echo "GITHUB_HEAD_REF is not available. Exiting..."
+              exit 1
+            fi
+          else
+            echo "This is not a pull request event"
+            if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+              ref=${GITHUB_REF#refs/tags/}
+            else
+              ref=${GITHUB_REF#refs/heads/}
+            fi
+          fi
+          
+          # Get the list of libraries
+          projects=$(cat angular.json | jq -r '.projects | keys | .[]')
+          
+          # Function to trigger workflow for a library
+          trigger_workflow() {
+            library=$1
+            echo "Trigger build for $library"
+            response=$(curl -s -w "%{http_code}" -X POST \
+              -H "Authorization: Bearer ${{ secrets.WORKFLOW_TOKEN }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/$repo/actions/workflows/$workflow_id/dispatches" \
+              -d "{\"ref\":\"$ref\", \"inputs\":{\"library\":\"$library\", \"registry\":\"${{ steps.package-meta.outputs.registry }}\", \"registry_secret\":\"${{ steps.package-meta.outputs.secret }}\", \"package_scope\":\"@$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')\", \"package_name\":\"@$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/$library\", \"package_version\":\"${{ steps.package-meta.outputs.version }}\"}")
+            
+            # Check if the HTTP status code is not in the 2xx range
+            if [[ "${response:${#response}-3}" != "204" ]]; then
+              echo "Failed to trigger workflow for $library. HTTP status code: ${response:${#response}-3}"
+              exit 1
+            fi
+          }
+          
+          # Loop through libraries and trigger workflow
+          for library in $projects; do
+            trigger_workflow $library
+          done

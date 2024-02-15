@@ -1,0 +1,162 @@
+name: Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      library:
+        description: Name of the library to build
+        required: true
+      registry:
+        description: NPM Registry
+        required: true
+      registry_secret:
+        description: NPM Registry secret
+        required: true
+      package_scope:
+        description: Package scope
+        required: true
+      package_name:
+        description: NPM Package name
+        required: true
+      package_version:
+        description: NPM Package version
+        required: true
+      package_tag:
+        description: NPM Package tag
+        required: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show Inputs values
+        if: ${{ env.ACTIONS_STEP_DEBUG  == 'true' }}
+        run: |
+          echo ${{ inputs.library }}
+          echo ${{ inputs.registry }}
+          echo ${{ inputs.registry_secret }}
+          echo ${{ inputs.package_name }}
+          echo ${{ inputs.package_version }}
+          echo ${{ inputs.package_tag }}
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Generate README
+        run: |
+          project_name=$(echo "${{ inputs.library }}" | sed -e 's/-/ /g' -e "s/\b\(.\)/\u\1/g")
+          echo -e "# $project_name\nThe sources for this package are in the main [$project_name](https://github.com/${{ github.repository }}) repo. Please file issues and pull requests against that repo." > ./projects/${{ inputs.library }}/README.md
+
+      # Setup the requirement for npm package
+      - name: Set up Node.js
+        env:
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          PACKAGE_SCOPE: ${package_name%%/*}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: ${{ inputs.registry }}
+          scope: ${{ inputs.package_scope }}
+
+      # Add information to the package configuration.
+      - name: Configure package
+        run: |
+          package_path=./projects/${{ inputs.library }}/package.json
+          jq \
+            --arg owner "$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" \
+            --arg version "${{ inputs.package_version }}" \
+            --arg repo "git+https://github.com/${{ github.repository }}.git" \
+            --arg author "${{ env.AUTHOR_NAME }} <${{ env.AUTHOR_EMAIL }}>" \
+            --arg name "${{ inputs.package_name }}" \
+            '.name = $name | .version = $version | .repository = {"type": "git", "url": $repo} | .author = $author' \
+            "$package_path" > "$package_path.tmp" && mv "$package_path.tmp" "$package_path"
+
+      - name: Show package.json values
+        if: ${{ env.ACTIONS_STEP_DEBUG  == 'true' }}
+        run: cat ./projects/${{ inputs.library }}/package.json
+
+      # Install requirement and build the package.
+      - name: Build the package
+        run: yarn install
+      - run: npx ng build ${{ inputs.library }}
+
+      - name: Get the previous package id for the same package version
+        if: ${{ !(startsWith(github.ref, 'refs/tags/v')) }}
+        id: version-id
+        run: |
+          ORG=${{ github.repository_owner }}
+          PACKAGE_NAME=${{ inputs.library }}
+          PACKAGE_VERSION=${{ inputs.package_version }}
+
+          response=$(curl -s -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/orgs/${ORG}/packages/npm/${PACKAGE_NAME}/versions")
+
+          # Extract HTTP status code
+          status_code="${response: -3}"
+
+          # Check if the request was successful (status code 2xx)
+          if [[ $status_code -eq 200 ]]; then
+            # Fetch response body
+            response_body=$(echo "${response}" | sed '$s/...$//')
+
+            # Parse JSON response with jq to find the version ID
+            version_id=$(echo "${response_body}" | jq -r --arg PACKAGE_VERSION "${PACKAGE_VERSION}" '
+            .[] | select(.name | startswith($PACKAGE_VERSION)) | .id')
+
+            # Check if version_id is not empty
+            if [[ -n "${version_id}" ]]; then
+              echo "Version ID found: ${version_id}"
+              echo "version_id=${version_id}" >> $GITHUB_OUTPUT
+            else
+              echo "Version not found"
+              echo "version_id=0" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "Package not found or access denied"
+            echo "version_id=0" >> $GITHUB_OUTPUT
+          fi
+
+      # Remove previous push of that version
+      - name: Delete package
+        if: ${{ !(startsWith(github.ref, 'refs/tags/v')) && steps.version-id.outputs.version_id != '0' }}
+        run: |
+          ORG=${{ github.repository_owner }}
+          PACKAGE_NAME=${{ inputs.library }}
+          VERSION_ID=${{ steps.version-id.outputs.version_id }}
+
+          # Delete the package version using GitHub API
+          response=$(curl -s -w "%{http_code}" -X DELETE -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/orgs/${ORG}/packages/npm/${PACKAGE_NAME}/versions/${VERSION_ID}")
+
+          # Extract HTTP status code
+          status_code="${response: -3}"
+
+          # Check if the request was successful (status code 2xx)
+          if [[ $status_code -eq 204 ]]; then
+            echo "Package version deleted successfully."
+          else
+            echo "Failed to delete package version. HTTP status code: $status_code"
+            exit 1
+          fi
+
+      # Publish the package.
+      # If it's from a git tag, the package is published to npmjs.com and
+      # the subversion name set as tag.
+      # If it's from a PR, the package is published to github and no tag is set.
+      # If none above, the package is published to github and the latest tag is set.
+      - name: Publish the package
+        run: |
+          TAG="${{ inputs.package_tag }}"
+          if [[ -z "$TAG" ]]; then
+            TAG=$(echo '${{ inputs.package_version }}' | sed -n 's/.*-\(.*\)\..*/\1/p')
+            if [[ -z "$TAG" ]]; then
+              TAG='latest'
+            fi
+          fi
+
+          cd ./dist/${{ inputs.library }}
+          npm publish --access public --tag $TAG --verbose
+
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

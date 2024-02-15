@@ -1,27 +1,29 @@
 # AngularComponents
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.1.0.
+## Dynamic Form
 
-## Development server
+AngularComponents includes a powerful Dynamic Form feature that allows you to generate an Angular Material style form based on the structure you configure. It simplifies the process of replicating an object to form fields, making it easy to perform Create, Read, Update, and Delete operations.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+### Features
 
-## Code scaffolding
+- **Dynamic Form Generation**: Configure the structure to dynamically generate Angular Material style forms.
+- **CRUD Operations**: Easily perform Create, Read, Update, and Delete operations with the generated forms.
+- **Flexible Dialog**: AngularComponents provides a flexible dialog for seamless interaction.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+### Getting Started
 
-## Build
+To use Dynamic Form in your Angular project, follow the steps below:
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+1. Install AngularComponents.
+2. Configure the form structure based on your requirements.
+3. Integrate Dynamic Form into your application for a powerful form generation experience.
 
-## Running unit tests
+For detailed instructions and examples, refer to the main [AngularComponents repository](https://github.com/UtopikGoodies/angular-components).
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+### Contributing
 
-## Running end-to-end tests
+We welcome contributions! If you have suggestions, feature requests, or bug reports, feel free to [create an issue](https://github.com/UtopikGoodies/angular-components/issues) or submit a pull request.
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+### License
 
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+AngularComponents is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

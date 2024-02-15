@@ -1,0 +1,105 @@
+name: Clean Up
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  clean-up:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Delete Versions of Packages for Closed PRs
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.WORKFLOW_TOKEN }}
+          script: |
+            const org = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const packageTypes = ['container', 'npm', 'maven', 'rubygems', 'docker', 'nuget'];
+
+            async function safeApiCall(apiPromise, description) {
+              try {
+                const response = await apiPromise;
+                console.log(`Success: ${description}`);
+                return response;
+              } catch (error) {
+                console.error(`API Error for ${description}:`, error);
+                return null;
+              }
+            }
+
+            const closedPrsResponse = await safeApiCall(
+              github.rest.pulls.list({
+                owner: org,
+                repo: repo,
+                state: 'closed'
+              }), 
+              'Fetching closed PRs'
+            );
+            if (!closedPrsResponse) return;
+
+            const closedPrNumbers = closedPrsResponse.data.map(pr => pr.number);
+
+            for (const packageType of packageTypes) {
+              console.log(`Checking package type: ${packageType}`);
+
+              let packagesResponse;
+              try {
+                packagesResponse = await github.rest.packages.listPackagesForOrganization({
+                  org: org,
+                  package_type: packageType
+                });
+              } catch (error) {
+                console.error(`Error fetching packages of type ${packageType}:`, error);
+                continue;
+              }
+
+              for (const package of packagesResponse.data) {
+                const packageName = package.name;
+                console.log(`Checking package: ${packageName}`);
+
+                const versionsResponse = await safeApiCall(
+                  github.rest.packages.getAllPackageVersionsForPackageOwnedByOrg({
+                    org: org,
+                    package_type: packageType,
+                    package_name: packageName
+                  }),
+                  `Fetching versions for package ${packageName}`
+                );
+                if (!versionsResponse) continue;
+
+                for (const version of versionsResponse.data) {
+                  let prNumberMatch;
+                  if (packageType === 'container' || packageType === 'docker') {
+                    // For container and docker, use the tag
+                    const versionTags = version.metadata.container.tags;
+                    for (const tag of versionTags) {
+                      prNumberMatch = tag.match(/.(\d+)$/);
+                      if (prNumberMatch && closedPrNumbers.includes(parseInt(prNumberMatch[1]))) {
+                        break; // Break the loop if a matching PR number is found
+                      }
+                    }
+                  } else {
+                    // For maven, rubygems, nuget, use the version name
+                    prNumberMatch = version.name.match(/.(\d+)$/);
+                  }
+
+                  if (prNumberMatch && closedPrNumbers.includes(parseInt(prNumberMatch[1]))) {
+                    console.log(`Deleting package version ${version.id} of ${packageName} for closed PR #${prNumberMatch[1]}`);
+                    await safeApiCall(
+                      github.rest.packages.deletePackageVersionForOrg({
+                        org: org,
+                        package_type: packageType,
+                        package_name: packageName,
+                        package_version_id: version.id,
+                      }),
+                      `Deleting package version ${version.id} of ${packageName}`
+                    );
+                  }
+                }
+              }
+            }
