@@ -46,8 +46,7 @@ jobs:
       - name: Generate README
         run: |
           project_name=$(echo "${{ inputs.library }}" | sed -e 's/-/ /g' -e "s/\b\(.\)/\u\1/g")
-          echo -e "# $project_name\nThe sources for this package are in the main [$project_name](https://github.com/${{ env.GITHUB_REPOSITORY }}) repo. Please file issues and pull requests against that repo." >> ./projects/${{ inputs.library }}/README.md
-      - run: cat ./projects/${{ inputs.library }}/README.md
+          echo -e "# $project_name\nThe sources for this package are in the main [$project_name](https://github.com/${{ github.repository }}) repo. Please file issues and pull requests against that repo." > ./projects/${{ inputs.library }}/README.md
 
       # Setup the requirement for npm package
       - name: Set up Node.js
