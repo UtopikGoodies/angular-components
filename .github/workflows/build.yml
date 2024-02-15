@@ -89,7 +89,7 @@ jobs:
           PACKAGE_NAME=${{ inputs.library }}
           PACKAGE_VERSION=${{ inputs.package_version }}
           
-          response=$(curl -v -s -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          response=$(curl -s -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/orgs/${ORG}/packages/npm/${PACKAGE_NAME}/versions")
           
           echo "$response"
@@ -103,8 +103,8 @@ jobs:
             response_body=$(echo "${response}" | sed '$s/...$//')
           
             # Parse JSON response with jq to find the version ID
-            version_id=$(echo "${response_body}" | jq -r --arg PACKAGE_VERSION "${PACKAGE_VERSION}" \
-              '.[] | select(.version == $PACKAGE_VERSION) | .id')
+            version_id=$(echo "${response_body}" | jq -r --arg PACKAGE_VERSION "${PACKAGE_VERSION}" '
+            .[] | select(.name | startswith($PACKAGE_VERSION)) | .id')
           
             # Check if version_id is not empty
             if [[ -n "${version_id}" ]]; then
