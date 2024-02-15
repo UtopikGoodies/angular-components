@@ -107,20 +107,15 @@ jobs:
             # Check if version_id is not empty
             if [[ -n "${version_id}" ]]; then
               echo "Version ID found: ${version_id}"
-              echo "VERSION_ID=${version_id}" >> $GITHUB_ENV
+              echo "VERSION_ID=${version_id}" >> $GITHUB_OUTPUT
             else
               echo "Version not found"
-              echo "VERSION_ID=0" >> $GITHUB_ENV
+              echo "VERSION_ID=0" >> $GITHUB_OUTPUT
             fi
           else
             echo "Package not found or access denied"
-            echo "VERSION_ID=0" >> $GITHUB_ENV
+            echo "VERSION_ID=0" >> $GITHUB_OUTPUT
           fi
-      
-      - name: Debug Info
-        run: |
-          echo "github.ref: ${{ github.ref }}"
-          echo "steps.version-id.outputs.result: ${{ steps.version-id.outputs.result }}"
 
       # Remove previous push of that version
       - name: Delete package
