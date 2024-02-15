@@ -92,7 +92,7 @@ jobs:
           response=$(curl -v -s -w "%{http_code}" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/orgs/${ORG}/packages/npm/${PACKAGE_NAME}/versions")
           
-          console.log(response)
+          echo "$response"
 
           # Extract HTTP status code
           status_code="${response: -3}"
