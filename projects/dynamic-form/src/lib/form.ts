@@ -19,7 +19,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { FormGenerator } from './form-generator';
 
-export function isRequired<T>(property: T | null): boolean {
+export function isPropertyRequired<T>(property: T | null): boolean {
   return property !== null;
 }
 

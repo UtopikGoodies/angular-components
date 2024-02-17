@@ -9,7 +9,7 @@ import { DynamicForm } from './form';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
-export enum Action {
+export enum DialogAction {
   Close = 'Close',
   Submit = 'Submit',
   Delete = 'Delete',
@@ -23,7 +23,7 @@ export interface DialogData {
 }
 
 export interface DialogOutput<T> {
-  action: Action;
+  action: DialogAction;
   value: T;
 }
 
@@ -72,14 +72,14 @@ export class DynamicDialog {
   ) {}
 
   onClose() {
-    this.dialogRef.close({ action: Action.Close });
+    this.dialogRef.close({ action: DialogAction.Close });
   }
 
   onSubmit(value: object) {
-    this.dialogRef.close({ action: Action.Submit, value: value });
+    this.dialogRef.close({ action: DialogAction.Submit, value: value });
   }
 
   onDelete(value: object) {
-    this.dialogRef.close({ action: Action.Delete, value: value });
+    this.dialogRef.close({ action: DialogAction.Delete, value: value });
   }
 }
