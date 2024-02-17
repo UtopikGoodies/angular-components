@@ -6,13 +6,8 @@ import {
   Output,
   ViewEncapsulation,
 } from '@angular/core';
-import {
-  AbstractFormField,
-} from './models';
-import {
-  FormControlStatus,
-  FormGroup,
-} from '@angular/forms';
+import { AbstractFormField } from './models';
+import { FormControlStatus, FormGroup } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
 import {
   DynamicFormFieldArray,
@@ -23,6 +18,10 @@ import { DynamicFormActions } from './form-actions';
 import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { FormGenerator } from './form-generator';
+
+export function isRequired<T>(property: T | null): boolean {
+  return property !== null;
+}
 
 @Component({
   selector: 'dyn-form',
@@ -39,40 +38,45 @@ import { FormGenerator } from './form-generator';
   template: `
     <form [formGroup]="formGroup">
       @for (formField of dynFormFields; track formField) {
-      <div class="form-row">
-        @switch (formField.formFieldType) { @case ('FormFieldArray') {
-        <dyn-form-field-array
-          [dynFormField]="formField"
-          [dynFormGroup]="formGroup.get(formField.name)"
-        ></dyn-form-field-array>
-        } @case ('FormfieldObject') {
-        <dyn-form-field-object
-          [dynFormField]="formField"
-          [dynFormGroup]="formGroup.get(formField.name)"
-        ></dyn-form-field-object>
-        } @default {
-        <dyn-form-field
-          [dynFormField]="formField"
-          [dynFormControl]="formGroup.get(formField.name)"
-        ></dyn-form-field>
-        } }
-      </div>
+        <div class="form-row">
+          @switch (formField.formFieldType) {
+            @case ('FormFieldArray') {
+              <dyn-form-field-array
+                [dynFormField]="formField"
+                [dynFormGroup]="formGroup.get(formField.name)"
+              ></dyn-form-field-array>
+            }
+            @case ('FormfieldObject') {
+              <dyn-form-field-object
+                [dynFormField]="formField"
+                [dynFormGroup]="formGroup.get(formField.name)"
+              ></dyn-form-field-object>
+            }
+            @default {
+              <dyn-form-field
+                [dynFormField]="formField"
+                [dynFormControl]="formGroup.get(formField.name)"
+              ></dyn-form-field>
+            }
+          }
+        </div>
       }
     </form>
     <dyn-form-actions actionPosition="end">
-      @if(buttonDelete) {
-      <button mat-raised-button color="accent" (click)="delete()">
-        Delete
-      </button>
-      } @if(formGroup){
-      <button
-        mat-raised-button
-        color="primary"
-        [disabled]="!formGroup.valid"
-        (click)="submit()"
-      >
-        {{ buttonActionText }}
-      </button>
+      @if (buttonDelete) {
+        <button mat-raised-button color="accent" (click)="delete()">
+          Delete
+        </button>
+      }
+      @if (formGroup) {
+        <button
+          mat-raised-button
+          color="primary"
+          [disabled]="!formGroup.valid"
+          (click)="submit()"
+        >
+          {{ buttonActionText }}
+        </button>
       }
     </dyn-form-actions>
   `,
