@@ -1,9 +1,9 @@
 export abstract class AbstractFormField {
   abstract formFieldType: string;
-  name!: string;
-  title!: string;
-  required: boolean = false;
   disabled: boolean = false;
+  name!: string;
+  required: boolean = false;
+  title!: string;
 }
 
 export abstract class FormField<T> extends AbstractFormField {
@@ -15,19 +15,20 @@ export abstract class FormField<T> extends AbstractFormField {
 }
 
 export class FormFieldArray extends AbstractFormField {
-  formFieldType = 'FormFieldArray';
-  subtitle!: string;
+  distinct: boolean = false;
   formFieldModel!: AbstractFormField;
   formFields: AbstractFormField[] = [];
-  distinct: boolean = false;
+  formFieldType = 'FormFieldArray';
+  subtitle!: string;
 
   constructor(data: {
-    name: string;
-    title: string;
-    subtitle?: string;
+    disabled?: boolean;
+    distinct?: boolean;
     formFieldModel?: AbstractFormField;
     formFields?: AbstractFormField[];
-    distinct?: boolean;
+    name: string;
+    subtitle?: string;
+    title: string;
   }) {
     super();
     Object.assign(this, data);
@@ -42,6 +43,7 @@ export class FormFieldInput<T = string> extends FormField<T> {
   type: string = 'text';
 
   constructor(data: {
+    disabled?: boolean;
     hidden?: boolean;
     hint?: string;
     icon?: string;
@@ -58,16 +60,16 @@ export class FormFieldInput<T = string> extends FormField<T> {
 }
 
 export class FormfieldObject extends AbstractFormField {
+  formFields!: FormField<unknown>[];
   formFieldType = 'FormfieldObject';
   subtitle!: string;
-  formFields!: FormField<unknown>[];
 
   constructor(data: {
-    name: string;
-    title: string;
-    subtitle?: string;
     formFields: FormField<unknown>[];
+    name: string;
     required?: boolean;
+    subtitle?: string;
+    title: string;
   }) {
     super();
     Object.assign(this, data);
@@ -87,20 +89,21 @@ export interface FormFieldSelectOptionGroup<T = string> {
 
 export class FormFieldSelect<T = string> extends FormField<T> {
   formFieldType = 'FormFieldSelect';
-  options?: Option<T>[];
   optionGroups?: FormFieldSelectOptionGroup<T>[];
   optionNone?: boolean = true;
+  options?: Option<T>[];
 
   constructor(data: {
+    disabled?: boolean;
+    hidden?: boolean;
     hint?: string;
     icon?: string;
     name: string;
-    options?: Option<T>[]; // Ignored if optionGroups is set
     optionGroups?: FormFieldSelectOptionGroup<T>[];
+    optionNone?: boolean;
+    options?: Option<T>[]; // Ignored if optionGroups is set
     placeholder?: string;
     required?: boolean;
-    hidden?: boolean;
-    optionNone?: boolean;
     title?: string;
     value?: T;
   }) {
