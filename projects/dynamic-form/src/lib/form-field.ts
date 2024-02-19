@@ -3,6 +3,8 @@ import {
   Component,
   OnInit,
   Input,
+  OnChanges,
+  SimpleChanges,
 } from '@angular/core';
 import {
   ReactiveFormsModule,
@@ -46,7 +48,6 @@ import { FormGenerator } from './form-generator';
           [formControl]="formControl"
           [errorStateMatcher]="matcher"
           [placeholder]="formField.placeholder"
-          [disabled]="formField.disabled"
         />
         @if (formField.icon) {
           <mat-icon matSuffix>{{ formField.icon }}</mat-icon>
@@ -103,7 +104,6 @@ export class DynamicFormFieldInput implements OnInit {
         [formControl]="formControl"
         [errorStateMatcher]="matcher"
         [placeholder]="formField.placeholder"
-        [disabled]="formField.disabled"
       >
         @if (formField.optionNone) {
           <mat-option>-- None --</mat-option>
@@ -362,7 +362,7 @@ export class DynamicFormFieldObject implements OnInit {
     }
   `,
 })
-export class DynamicFormFieldArray implements OnInit {
+export class DynamicFormFieldArray implements OnInit, OnChanges {
   @Input()
   get dynFormField(): AbstractFormField {
     return this.formFieldArray;
@@ -388,6 +388,11 @@ export class DynamicFormFieldArray implements OnInit {
         this.formFieldArray.formFields.length > 0,
     );
     this.setFormGroupState();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['dynFormField']) {
+    }
   }
 
   addFormField() {

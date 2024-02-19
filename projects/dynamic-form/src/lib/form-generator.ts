@@ -85,6 +85,6 @@ export class FormGenerator {
       validators.push(Validators.required);
     }
 
-    return new FormControl(formField.value, validators);
+    return new FormControl({value: formField.value, disabled: formField.disabled}, validators);
   }
 }
