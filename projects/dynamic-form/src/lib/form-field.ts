@@ -51,6 +51,7 @@ import { FormGenerator } from './form-generator';
         [formControl]="formControl"
         [errorStateMatcher]="matcher"
         [placeholder]="formField.placeholder"
+        [disabled]="formField.disabled"
       />
       @if (formField.icon) {
       <mat-icon matSuffix>{{ formField.icon }}</mat-icon>
@@ -105,6 +106,7 @@ export class DynamicFormFieldInput implements OnInit {
         [formControl]="formControl"
         [errorStateMatcher]="matcher"
         [placeholder]="formField.placeholder"
+        [disabled]="formField.disabled"
       >
         @if (formField.optionNone){
         <mat-option>-- None --</mat-option>

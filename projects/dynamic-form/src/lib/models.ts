@@ -3,6 +3,7 @@ export abstract class AbstractFormField {
   name!: string;
   title!: string;
   required: boolean = false;
+  disabled: boolean = false;
 }
 
 export abstract class FormField<T> extends AbstractFormField {
@@ -73,12 +74,12 @@ export class FormfieldObject extends AbstractFormField {
   }
 }
 
-export interface Option<T> {
+export interface Option<T = string> {
   value: T;
   viewValue: string;
 }
 
-export interface FormFieldSelectOptionGroup<T> {
+export interface FormFieldSelectOptionGroup<T = string> {
   disabled?: boolean;
   name: string;
   options: Option<T>[];
