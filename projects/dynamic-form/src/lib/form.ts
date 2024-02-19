@@ -68,7 +68,7 @@ export function isPropertyRequired<T>(property: T | null): boolean {
           Delete
         </button>
       }
-      @if (formGroup) {
+      @if (formGroup && buttonActionText) {
         <button
           mat-raised-button
           color="primary"
