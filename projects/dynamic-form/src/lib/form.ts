@@ -107,26 +107,6 @@ export class DynamicForm implements OnInit {
     });
   }
 
-  // ngAfterViewInit(): void {
-  //   // this.formGroup = this.generateFormGroup(this.dynFormFields);
-
-  //   this.formGroup.valueChanges.subscribe({
-  //     next: (value) => this.formValueChanges.emit(value),
-  //     error: (err) => console.error(err),
-  //   });
-  //   this.formGroup.statusChanges.subscribe({
-  //     next: (value) => this.formStatusChanges.emit(value),
-  //     error: (err) => console.error(err),
-  //   });
-  // }
-
-  // ngOnChanges(changes: SimpleChanges) {
-  //   if (changes['dynFormFields']) {
-  //     this.formGroup = this.generateFormGroup(this.dynFormFields);
-  //     console.debug();
-  //   }
-  // }
-
   delete() {
     this.deleteValue.emit(this.formGroup.value);
   }

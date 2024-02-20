@@ -27,12 +27,48 @@ import {
 } from './models';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatFormFieldModule, MatLabel } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { FormGenerator } from './form-generator';
+
+@Component({
+  selector: 'dyn-form-field-label',
+  standalone: true,
+  imports: [MatFormFieldModule],
+  template: `
+    <div class="label">
+      <label [attr.for]="formField.name"
+        >{{ formField.title }}:</label
+      >{{ formField.value }}
+    </div>
+  `,
+  styles: `
+    .label {
+      display: flex;
+      align-items: center;
+      margin: 10px 0 10px 5px
+    }
+
+    .label label {
+      margin-right: 8px;
+      font-weight: bold;
+    }
+  `,
+})
+export class DynamicFormfieldLabel {
+  @Input() set dynFormControl(value: AbstractControl<unknown, unknown> | null) {
+    this.formControl = value as FormControl<unknown>;
+  }
+  @Input() set dynFormField(value: FormField<unknown>) {
+    this.formField = value as FormFieldInput<unknown>;
+  }
+
+  formControl!: FormControl<unknown>;
+  formField!: FormFieldInput<unknown>;
+}
 
 @Component({
   selector: 'dyn-form-field-input',
@@ -174,7 +210,12 @@ export class DynamicFormFieldSelect implements OnInit {
 @Component({
   selector: 'dyn-form-field',
   standalone: true,
-  imports: [ReactiveFormsModule, DynamicFormFieldInput, DynamicFormFieldSelect],
+  imports: [
+    ReactiveFormsModule,
+    DynamicFormFieldInput,
+    DynamicFormFieldSelect,
+    DynamicFormfieldLabel,
+  ],
   template: `
     <div class="formfield">
       @switch (formField.formFieldType) {
@@ -189,6 +230,12 @@ export class DynamicFormFieldSelect implements OnInit {
             [dynFormField]="formField"
             [dynFormControl]="formControl"
           ></dyn-form-field-select>
+        }
+        @case ('FormfieldLabel') {
+          <dyn-form-field-label
+            [dynFormField]="formField"
+            [dynFormControl]="formControl"
+          ></dyn-form-field-label>
         }
       }
     </div>

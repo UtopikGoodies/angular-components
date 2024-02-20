@@ -38,6 +38,20 @@ export class FormFieldArray extends AbstractFormField {
   }
 }
 
+export class FormfieldLabel extends FormField<string> {
+  formFieldType = 'FormfieldLabel';
+  constructor(data: {
+    disabled?: boolean;
+    hidden?: boolean;
+    name: string;
+    title: string;
+    value: string;
+  }) {
+    super();
+    Object.assign(this, data);
+  }
+}
+
 export class FormFieldInput<T = string> extends FormField<T> {
   formFieldType = 'FormFieldInput';
   type: string = 'text';
