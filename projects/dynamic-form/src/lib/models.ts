@@ -95,7 +95,7 @@ export interface Option<T = string> {
   viewValue: string;
 }
 
-export interface FormFieldSelectOptionGroup<T = string> {
+export interface OptionGroup<T = string> {
   disabled?: boolean;
   name: string;
   options: Option<T>[];
@@ -103,7 +103,7 @@ export interface FormFieldSelectOptionGroup<T = string> {
 
 export class FormFieldSelect<T = string> extends FormField<T> {
   formFieldType = 'FormFieldSelect';
-  optionGroups?: FormFieldSelectOptionGroup<T>[];
+  optionGroups?: OptionGroup<T>[];
   optionNone?: boolean = true;
   options?: Option<T>[];
 
@@ -113,7 +113,7 @@ export class FormFieldSelect<T = string> extends FormField<T> {
     hint?: string;
     icon?: string;
     name: string;
-    optionGroups?: FormFieldSelectOptionGroup<T>[];
+    optionGroups?: OptionGroup<T>[];
     optionNone?: boolean;
     options?: Option<T>[]; // Ignored if optionGroups is set
     placeholder?: string;
