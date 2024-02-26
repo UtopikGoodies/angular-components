@@ -23,6 +23,8 @@ import {
   FormFieldArray,
   FormFieldInput,
   FormFieldSelect,
+  Option,
+  OptionGroup,
   FormfieldObject,
 } from './models';
 import { MatButtonModule } from '@angular/material/button';
@@ -40,8 +42,7 @@ import { FormGenerator } from './form-generator';
   imports: [MatFormFieldModule],
   template: `
     <div class="label">
-      <label [attr.for]="formField.name"
-        >{{ formField.title }}:</label
+      <label [attr.for]="formField.name">{{ formField.title }}:</label
       >{{ formField.value }}
     </div>
   `,
@@ -49,7 +50,7 @@ import { FormGenerator } from './form-generator';
     .label {
       display: flex;
       align-items: center;
-      margin: 10px 0 10px 5px
+      margin: 10px 0 10px 5px;
     }
 
     .label label {
@@ -144,18 +145,17 @@ export class DynamicFormFieldInput implements OnInit {
         @if (formField.optionNone) {
           <mat-option>-- None --</mat-option>
         }
-        @if (formField.optionGroups) {
-          @for (group of formField.optionGroups; track group) {
-            <mat-optgroup [label]="group.name" [disabled]="group.disabled">
-              @for (option of group.options; track option) {
-                <mat-option [value]="option.value">{{
-                  option.viewValue
+
+        @for (option of formField.options; track option) {
+          @if (isOptionGroup(option)) {
+            <mat-optgroup [label]="option.name" [disabled]="option.disabled">
+              @for (groupOption of option.options; track groupOption) {
+                <mat-option [value]="groupOption.value">{{
+                  groupOption.viewValue
                 }}</mat-option>
               }
             </mat-optgroup>
-          }
-        } @else {
-          @for (option of formField.options; track option) {
+          } @else {
             <mat-option [value]="option.value">{{
               option.viewValue
             }}</mat-option>
@@ -195,6 +195,7 @@ export class DynamicFormFieldSelect implements OnInit {
   formControlErrorMessage!: FormControlErrorMessage;
   formField!: FormFieldSelect;
   matcher!: CustomErrorStateMatcher;
+  formFieldOptionGroups?: OptionGroup<unknown>[];
 
   constructor() {
     this.matcher = new CustomErrorStateMatcher();
@@ -204,6 +205,10 @@ export class DynamicFormFieldSelect implements OnInit {
     this.formControlErrorMessage = new FormControlErrorMessage(
       this.formControl,
     );
+  }
+
+  isOptionGroup(option: any): option is OptionGroup {
+    return option.type === 'OptionGroup';
   }
 }
 

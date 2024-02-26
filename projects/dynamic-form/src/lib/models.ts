@@ -90,22 +90,21 @@ export class FormfieldObject extends AbstractFormField {
   }
 }
 
-export interface Option<T = string> {
+export type Option<T = string> = {
   value: T;
   viewValue: string;
-}
+};
 
-export interface OptionGroup<T = string> {
+export type OptionGroup<T = string> = {
   disabled?: boolean;
   name: string;
   options: Option<T>[];
-}
+};
 
 export class FormFieldSelect<T = string> extends FormField<T> {
   formFieldType = 'FormFieldSelect';
-  optionGroups?: OptionGroup<T>[];
-  optionNone?: boolean = true;
-  options?: Option<T>[];
+  optionNone: boolean = true;
+  options?: Option<T>[] | OptionGroup<T>[];
 
   constructor(data: {
     disabled?: boolean;
@@ -113,9 +112,8 @@ export class FormFieldSelect<T = string> extends FormField<T> {
     hint?: string;
     icon?: string;
     name: string;
-    optionGroups?: OptionGroup<T>[];
     optionNone?: boolean;
-    options?: Option<T>[]; // Ignored if optionGroups is set
+    options: Option<T>[] | OptionGroup<T>[];
     placeholder?: string;
     required?: boolean;
     title?: string;
