@@ -14,38 +14,38 @@ export abstract class FormField<T> extends AbstractFormField {
   value!: T;
 }
 
+export type FormFieldValue = {
+  formfieldName: string;
+  formfieldValue: string;
+};
+
 export class FormFieldArray extends AbstractFormField {
   distinct: boolean = false;
-  formFieldModel!: AbstractFormField;
-  formFields: AbstractFormField[] = [];
+  formFields!: AbstractFormField[];
   formFieldType = 'FormFieldArray';
   subtitle!: string;
 
   constructor(data: {
     disabled?: boolean;
     distinct?: boolean;
-    formFieldModel?: AbstractFormField;
-    formFields?: AbstractFormField[];
+    formFields: AbstractFormField[];
     name: string;
     subtitle?: string;
     title: string;
   }) {
     super();
     Object.assign(this, data);
-    // if (this.formFields.length == 0) {
-    //   this.formFields.push(this.formFieldModel);
-    // }
   }
 }
 
-export class FormfieldLabel extends FormField<string> {
+export class FormfieldLabel<T> extends FormField<T> {
   formFieldType = 'FormfieldLabel';
   constructor(data: {
     disabled?: boolean;
     hidden?: boolean;
     name: string;
     title: string;
-    value: string;
+    value: T;
   }) {
     super();
     Object.assign(this, data);

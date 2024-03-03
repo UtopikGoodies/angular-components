@@ -3,7 +3,7 @@ import { AbstractFormField, FormFieldArray, FormfieldObject, FormField } from ".
 import { distinctValidator } from "./validators";
 
 export class FormGenerator {
-  static generateFormGroup(formFields: AbstractFormField[]): FormGroup {
+  static generateFormGroup(formFields: AbstractFormField[], noValue = false): FormGroup {
     const formGroup = new FormGroup({});
 
     if (!formFields) {
@@ -17,7 +17,7 @@ export class FormGenerator {
 
           formGroup.addControl(
             formFieldArray.name,
-            FormGenerator.generateFormArray(formFieldArray)
+            FormGenerator.generateFormArray(formFieldArray, noValue)
           );
 
           break;
@@ -27,7 +27,7 @@ export class FormGenerator {
 
           formGroup.addControl(
             FormFieldObject.name,
-            FormGenerator.generateFormGroup(FormFieldObject.formFields)
+            FormGenerator.generateFormGroup(FormFieldObject.formFields, noValue)
           );
 
           break;
@@ -36,7 +36,7 @@ export class FormGenerator {
           const formFieldControl = formField as FormField<unknown>;
           formGroup.addControl(
             formFieldControl.name,
-            FormGenerator.generateFormControl(formFieldControl)
+            FormGenerator.generateFormControl(formFieldControl, noValue)
           );
 
           break;
@@ -47,7 +47,7 @@ export class FormGenerator {
   }
 
   static generateFormArray(
-    formFieldArray: FormFieldArray
+    formFieldArray: FormFieldArray, noValue = false
   ): FormArray<AbstractControl> {
     const formArray = new FormArray<AbstractControl>([]);
 
@@ -78,13 +78,13 @@ export class FormGenerator {
     return formArray;
   }
 
-  static generateFormControl<T>(formField: FormField<T>): FormControl {
+  static generateFormControl<T>(formField: FormField<T>, noValue = false): FormControl {
     let validators: ValidatorFn[] = [];
 
     if (formField.required) {
       validators.push(Validators.required);
     }
 
-    return new FormControl({value: formField.value, disabled: formField.disabled}, validators);
+    return new FormControl({ value: noValue ? null : formField.value, disabled: formField.disabled }, validators);
   }
 }

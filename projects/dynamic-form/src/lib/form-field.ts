@@ -41,7 +41,7 @@ import { FormGenerator } from './form-generator';
   standalone: true,
   imports: [MatFormFieldModule],
   template: `
-    <div class="label">
+    <div class="label" [style.display]="formField.hidden ? 'none' : ''">
       <label [attr.for]="formField.name">{{ formField.title }}:</label
       >{{ formField.value }}
     </div>
@@ -76,27 +76,25 @@ export class DynamicFormfieldLabel {
   standalone: true,
   imports: [MatInputModule, ReactiveFormsModule, MatFormFieldModule],
   template: `
-    @if (!formField.hidden) {
-      <mat-form-field class="full-width" appearance="fill">
-        <mat-label [attr.for]="formField.name">{{ formField.title }}</mat-label>
-        <input
-          matInput
-          [type]="formField.type"
-          [formControl]="formControl"
-          [errorStateMatcher]="matcher"
-          [placeholder]="formField.placeholder"
-        />
-        @if (formField.icon) {
-          <mat-icon matSuffix>{{ formField.icon }}</mat-icon>
-        }
-        @if (formField.hint) {
-          <mat-hint>{{ formField.hint }}</mat-hint>
-        }
-        @if (formControl.invalid) {
-          <mat-error>{{ formControlErrorMessage.getErrorMessage() }}</mat-error>
-        }
-      </mat-form-field>
-    }
+    <mat-form-field class="full-width" [style.display]="formField.hidden ? 'none' : ''" appearance="fill">
+      <mat-label [attr.for]="formField.name">{{ formField.title }}</mat-label>
+      <input
+        matInput
+        [type]="formField.type"
+        [formControl]="formControl"
+        [errorStateMatcher]="matcher"
+        [placeholder]="formField.placeholder"
+      />
+      @if (formField.icon) {
+        <mat-icon matSuffix>{{ formField.icon }}</mat-icon>
+      }
+      @if (formField.hint) {
+        <mat-hint>{{ formField.hint }}</mat-hint>
+      }
+      @if (formControl.invalid) {
+        <mat-error>{{ formControlErrorMessage.getErrorMessage() }}</mat-error>
+      }
+    </mat-form-field>
   `,
   styles: `
     mat-form-field {
@@ -134,7 +132,7 @@ export class DynamicFormFieldInput implements OnInit {
   standalone: true,
   imports: [MatFormFieldModule, MatSelectModule, ReactiveFormsModule],
   template: `
-    <mat-form-field class="full-width" appearance="fill">
+    <mat-form-field class="full-width" [style.display]="formField.hidden ? 'none' : ''" appearance="fill">
       <mat-label [attr.for]="formField.name">{{ formField.title }}</mat-label>
 
       <mat-select
@@ -270,7 +268,7 @@ export class DynamicFormfield {
         <mat-card-subtitle>{{ formfieldObject.subtitle }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content class="card-content">
-        @if (isShowFormFieldShowen) {
+        @if (isFormFieldShowen()) {
           @for (formField of formfieldObject.formFields; track formField) {
             <div>
               <dyn-form-field
@@ -283,8 +281,8 @@ export class DynamicFormfield {
       </mat-card-content>
       @if (!isParentArray()) {
         <mat-card-actions align="end">
-          @if (isShowFormFieldShowen) {
-            <button mat-icon-button (click)="toggleShowFormField()">
+          @if (isFormFieldShowen()) {
+            <button mat-icon-button [disabled]="this.formfieldObject.required" (click)="toggleShowFormField()">
               <mat-icon>remove</mat-icon>
             </button>
           } @else {
@@ -313,24 +311,37 @@ export class DynamicFormFieldObject implements OnInit {
 
   formGroup!: FormGroup<object>;
   formfieldObject!: FormfieldObject;
-  isShowFormFieldShowen!: boolean;
+  showFormField!: boolean;
 
   ngOnInit(): void {
-    this.isShowFormFieldShowen = this.formfieldObject.required || this.expended;
-    this.setFormGroupState();
   }
 
   toggleShowFormField() {
-    this.isShowFormFieldShowen = !this.isShowFormFieldShowen;
-    this.setFormGroupState();
+    if (this.isFormFieldShowen()) {
+      this.showFormField = false;
+    } else {
+      this.showFormField = true;
+    }
   }
 
-  setFormGroupState() {
-    if (!this.isShowFormFieldShowen) {
-      this.formGroup.disable();
-    } else {
+  isFormFieldShowen(): boolean {
+    const hasRequiredField = this.formfieldObject.required;
+    const hasVisibleField = this.showFormField;
+    const hasSingleEmptyField =
+      this.formfieldObject.formFields.length > 0 &&
+      this.formfieldObject.formFields[0] instanceof FormField &&
+      this.formfieldObject.formFields[0].value !== null;
+
+    const result = hasRequiredField || hasVisibleField || hasSingleEmptyField
+    if (result) {
       this.formGroup.enable();
+    } else {
+      this.formGroup.disable();
     }
+
+    this.showFormField = result;
+
+    return result;
   }
 
   isParentArray(): boolean {
@@ -358,7 +369,7 @@ export class DynamicFormFieldObject implements OnInit {
         <mat-card-subtitle>{{ formFieldArray.subtitle }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content class="card-content">
-        @if (isFormFieldShowen) {
+        @if (isFormFieldShowen()) {
           @for (
             formField of formFieldArray.formFields;
             track formField;
@@ -375,7 +386,7 @@ export class DynamicFormFieldObject implements OnInit {
                 <dyn-form-field-object
                   [dynFormField]="formField"
                   [dynFormGroup]="formArray.get(index.toString())"
-                  [expended]="isFormFieldShowen"
+                  [expended]="isFormFieldShowen()"
                 ></dyn-form-field-object>
               }
               @default {
@@ -393,8 +404,8 @@ export class DynamicFormFieldObject implements OnInit {
           mat-icon-button
           (click)="removeFormField()"
           [disabled]="
-            (formFieldArray.formFieldModel.required && formArray.length <= 1) ||
-            !isFormFieldShowen
+            (formArray.length <= 1 && formFieldModel.required) ||
+            !isFormFieldShowen()
           "
         >
           <mat-icon>remove</mat-icon>
@@ -432,56 +443,57 @@ export class DynamicFormFieldArray implements OnInit, OnChanges {
 
   formArray!: FormArray;
   formFieldArray!: FormFieldArray;
-  isFormFieldShowen!: boolean;
+  formFieldModel!: AbstractFormField;
+  showFormField!: boolean;
 
   ngOnInit() {
-    this.showFormField(
-      this.formFieldArray.formFieldModel.required ||
-        this.formFieldArray.formFields.length > 0,
-    );
-    this.setFormGroupState();
+    this.formFieldModel = { ...this.formFieldArray.formFields[0] };
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['dynFormField']) {
-    }
   }
 
   addFormField() {
-    if (this.isFormFieldShowen) {
-      this.formFieldArray.formFields.push(this.formFieldArray.formFieldModel);
+    if (this.isFormFieldShowen()) {
+      this.formFieldArray.formFields.push(this.formFieldModel);
       this.formArray.push(
         FormGenerator.generateFormGroup([
-          this.formFieldArray.formFieldModel,
-        ]).get(this.formFieldArray.formFieldModel.name),
+          this.formFieldModel
+        ], true).get(this.formFieldModel.name),
       );
     } else {
-      this.showFormField(true);
+      this.showFormField = true;
     }
-    this.setFormGroupState();
   }
 
   removeFormField() {
-    if (this.formArray.length > 1) {
-      this.formArray.removeAt(this.formArray.length - 1);
-      this.formFieldArray.formFields.pop();
-      this.showFormField(true);
-    } else {
-      this.showFormField(this.formFieldArray.formFieldModel.required);
-    }
-    this.setFormGroupState();
+    // if (this.formFieldArray.formFields.length > 1) {
+    this.formFieldArray.formFields.pop();
+    this.formArray.removeAt(this.formArray.length - 1);
+    // } else {
+    //   this.showFormField = false;
+    // }
   }
 
-  setFormGroupState() {
-    if (this.isFormFieldShowen) {
+  isFormFieldShowen(): boolean {
+    const hasRequiredField = this.formFieldArray.required;
+    const hasVisibleField = this.showFormField;
+    const hasMultipleFields = this.formFieldArray.formFields.length > 1;
+    const hasSingleEmptyField =
+      this.formFieldArray.formFields.length === 1 &&
+      this.formFieldArray.formFields[0] instanceof FormField &&
+      this.formFieldArray.formFields[0].name === "" &&
+      this.formFieldArray.formFields[0].value === null;
+
+    const result = hasRequiredField || hasVisibleField || hasMultipleFields || !hasSingleEmptyField;
+    if (result) {
       this.formArray.enable();
     } else {
       this.formArray.disable();
     }
-  }
 
-  showFormField(value: boolean) {
-    this.isFormFieldShowen = value;
-    this.setFormGroupState();
+    this.showFormField = result;
+
+    return result;
   }
 }
