@@ -4,7 +4,7 @@
   }
 
   &.dyn-mdc-form-actions-align-end {
-    display: flex; 
+    display: flex;
     justify-content: flex-end;
   }
 }
@@ -15,4 +15,11 @@ button {
 
 .error-text {
   color: red;
+}
+
+form {
+  overflow: auto;
+  max-height: 80vh;
+  padding-right: 10px;
+  margin-bottom: 10px;
 }

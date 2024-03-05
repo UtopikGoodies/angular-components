@@ -1,11 +1,8 @@
-// prettier-ignore
-
 import { CommonModule } from '@angular/common';
 import {
   Component,
   OnInit,
   Input,
-  ChangeDetectorRef,
   OnChanges,
   SimpleChanges,
 } from '@angular/core';
@@ -26,11 +23,13 @@ import {
   FormFieldArray,
   FormFieldInput,
   FormFieldSelect,
+  Option,
+  OptionGroup,
   FormfieldObject,
 } from './models';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatFormFieldModule, MatLabel } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -38,12 +37,46 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { FormGenerator } from './form-generator';
 
 @Component({
+  selector: 'dyn-form-field-label',
+  standalone: true,
+  imports: [MatFormFieldModule],
+  template: `
+    <div class="label" [style.display]="formField.hidden ? 'none' : ''">
+      <label [attr.for]="formField.name">{{ formField.title }}:</label
+      >{{ formField.value }}
+    </div>
+  `,
+  styles: `
+    .label {
+      display: flex;
+      align-items: center;
+      margin: 10px 0 10px 5px;
+    }
+
+    .label label {
+      margin-right: 8px;
+      font-weight: bold;
+    }
+  `,
+})
+export class DynamicFormfieldLabel {
+  @Input() set dynFormControl(value: AbstractControl<unknown, unknown> | null) {
+    this.formControl = value as FormControl<unknown>;
+  }
+  @Input() set dynFormField(value: FormField<unknown>) {
+    this.formField = value as FormFieldInput<unknown>;
+  }
+
+  formControl!: FormControl<unknown>;
+  formField!: FormFieldInput<unknown>;
+}
+
+@Component({
   selector: 'dyn-form-field-input',
   standalone: true,
   imports: [MatInputModule, ReactiveFormsModule, MatFormFieldModule],
   template: `
-    @if (!formField.hidden){
-    <mat-form-field class="full-width" appearance="fill">
+    <mat-form-field class="full-width" [style.display]="formField.hidden ? 'none' : ''" appearance="fill">
       <mat-label [attr.for]="formField.name">{{ formField.title }}</mat-label>
       <input
         matInput
@@ -53,14 +86,15 @@ import { FormGenerator } from './form-generator';
         [placeholder]="formField.placeholder"
       />
       @if (formField.icon) {
-      <mat-icon matSuffix>{{ formField.icon }}</mat-icon>
-      } @if (formField.hint) {
-      <mat-hint>{{ formField.hint }}</mat-hint>
-      } @if (formControl.invalid) {
-      <mat-error>{{ formControlErrorMessage.getErrorMessage() }}</mat-error>
+        <mat-icon matSuffix>{{ formField.icon }}</mat-icon>
+      }
+      @if (formField.hint) {
+        <mat-hint>{{ formField.hint }}</mat-hint>
+      }
+      @if (formControl.invalid) {
+        <mat-error>{{ formControlErrorMessage.getErrorMessage() }}</mat-error>
       }
     </mat-form-field>
-    }
   `,
   styles: `
     mat-form-field {
@@ -88,7 +122,7 @@ export class DynamicFormFieldInput implements OnInit {
 
   ngOnInit(): void {
     this.formControlErrorMessage = new FormControlErrorMessage(
-      this.formControl
+      this.formControl,
     );
   }
 }
@@ -98,7 +132,7 @@ export class DynamicFormFieldInput implements OnInit {
   standalone: true,
   imports: [MatFormFieldModule, MatSelectModule, ReactiveFormsModule],
   template: `
-    <mat-form-field class="full-width" appearance="fill">
+    <mat-form-field class="full-width" [style.display]="formField.hidden ? 'none' : ''" appearance="fill">
       <mat-label [attr.for]="formField.name">{{ formField.title }}</mat-label>
 
       <mat-select
@@ -106,36 +140,45 @@ export class DynamicFormFieldInput implements OnInit {
         [errorStateMatcher]="matcher"
         [placeholder]="formField.placeholder"
       >
-        @if (formField.optionNone){
-        <mat-option>-- None --</mat-option>
-        } @if (formField.optionGroups){ @for (group of formField.optionGroups;
-        track group) {
-        <mat-optgroup [label]="group.name" [disabled]="group.disabled">
-          @for (option of group.options; track option) {
-          <mat-option [value]="option.value">{{ option.viewValue }}</mat-option>
+        @if (formField.optionNone) {
+          <mat-option>-- None --</mat-option>
+        }
+
+        @for (option of formField.options; track option) {
+          @if (isOptionGroup(option)) {
+            <mat-optgroup [label]="option.name" [disabled]="option.disabled">
+              @for (groupOption of option.options; track groupOption) {
+                <mat-option [value]="groupOption.value">{{
+                  groupOption.viewValue
+                }}</mat-option>
+              }
+            </mat-optgroup>
+          } @else {
+            <mat-option [value]="option.value">{{
+              option.viewValue
+            }}</mat-option>
           }
-        </mat-optgroup>
-        } } @else { @for (option of formField.options; track option) {
-        <mat-option [value]="option.value">{{ option.viewValue }}</mat-option>
-        } }
+        }
       </mat-select>
 
       @if (formField.icon) {
-      <mat-icon matSuffix>{{ formField.icon }}</mat-icon>
-      } @if (formField.hint) {
-      <mat-hint>{{ formField.hint }}</mat-hint>
-      } @if (formControl.invalid) {
-      <mat-error>{{ formControlErrorMessage.getErrorMessage() }}</mat-error>
+        <mat-icon matSuffix>{{ formField.icon }}</mat-icon>
+      }
+      @if (formField.hint) {
+        <mat-hint>{{ formField.hint }}</mat-hint>
+      }
+      @if (formControl.invalid) {
+        <mat-error>{{ formControlErrorMessage.getErrorMessage() }}</mat-error>
       }
     </mat-form-field>
   `,
   styles: `
-  mat-form-field {
-    width: 100%;
-  }
-  mat-form-field {
-    margin: 10px 0px 10px 0px
-  }
+    mat-form-field {
+      width: 100%;
+    }
+    mat-form-field {
+      margin: 10px 0px 10px 0px;
+    }
   `,
 })
 export class DynamicFormFieldSelect implements OnInit {
@@ -150,6 +193,7 @@ export class DynamicFormFieldSelect implements OnInit {
   formControlErrorMessage!: FormControlErrorMessage;
   formField!: FormFieldSelect;
   matcher!: CustomErrorStateMatcher;
+  formFieldOptionGroups?: OptionGroup<unknown>[];
 
   constructor() {
     this.matcher = new CustomErrorStateMatcher();
@@ -157,28 +201,46 @@ export class DynamicFormFieldSelect implements OnInit {
 
   ngOnInit(): void {
     this.formControlErrorMessage = new FormControlErrorMessage(
-      this.formControl
+      this.formControl,
     );
+  }
+
+  isOptionGroup(option: any): option is OptionGroup {
+    return option.type === 'OptionGroup';
   }
 }
 
 @Component({
   selector: 'dyn-form-field',
   standalone: true,
-  imports: [ReactiveFormsModule, DynamicFormFieldInput, DynamicFormFieldSelect],
+  imports: [
+    ReactiveFormsModule,
+    DynamicFormFieldInput,
+    DynamicFormFieldSelect,
+    DynamicFormfieldLabel,
+  ],
   template: `
     <div class="formfield">
-      @switch (formField.formFieldType) { @case ('FormFieldInput') {
-      <dyn-form-field-input
-        [dynFormField]="formField"
-        [dynFormControl]="formControl"
-      ></dyn-form-field-input>
-      } @case ('FormFieldSelect') {
-      <dyn-form-field-select
-        [dynFormField]="formField"
-        [dynFormControl]="formControl"
-      ></dyn-form-field-select>
-      } }
+      @switch (formField.formFieldType) {
+        @case ('FormFieldInput') {
+          <dyn-form-field-input
+            [dynFormField]="formField"
+            [dynFormControl]="formControl"
+          ></dyn-form-field-input>
+        }
+        @case ('FormFieldSelect') {
+          <dyn-form-field-select
+            [dynFormField]="formField"
+            [dynFormControl]="formControl"
+          ></dyn-form-field-select>
+        }
+        @case ('FormfieldLabel') {
+          <dyn-form-field-label
+            [dynFormField]="formField"
+            [dynFormControl]="formControl"
+          ></dyn-form-field-label>
+        }
+      }
     </div>
   `,
   styles: ``,
@@ -206,34 +268,35 @@ export class DynamicFormfield {
         <mat-card-subtitle>{{ formfieldObject.subtitle }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content class="card-content">
-        @if(isShowFormFieldShowen) { @for (formField of
-        formfieldObject.formFields; track formField) {
-        <div>
-          <dyn-form-field
-            [dynFormField]="formField"
-            [dynFormControl]="formGroup.get(formField.name)"
-          ></dyn-form-field>
-        </div>
-        } }
-      </mat-card-content>
-      @if(!isParentArray()){
-      <mat-card-actions align="end">
-        @if(isShowFormFieldShowen) {
-        <button mat-icon-button (click)="toggleShowFormField()">
-          <mat-icon>remove</mat-icon>
-        </button>
-        } @else {
-        <button mat-icon-button (click)="toggleShowFormField()">
-          <mat-icon>add</mat-icon>
-        </button>
+        @if (isFormFieldShowen()) {
+          @for (formField of formfieldObject.formFields; track formField) {
+            <div>
+              <dyn-form-field
+                [dynFormField]="formField"
+                [dynFormControl]="formGroup.get(formField.name)"
+              ></dyn-form-field>
+            </div>
+          }
         }
-      </mat-card-actions>
+      </mat-card-content>
+      @if (!isParentArray()) {
+        <mat-card-actions align="end">
+          @if (isFormFieldShowen()) {
+            <button mat-icon-button [disabled]="this.formfieldObject.required" (click)="toggleShowFormField()">
+              <mat-icon>remove</mat-icon>
+            </button>
+          } @else {
+            <button mat-icon-button (click)="toggleShowFormField()">
+              <mat-icon>add</mat-icon>
+            </button>
+          }
+        </mat-card-actions>
       }
     </mat-card>
   `,
   styles: `
     mat-card {
-      margin: 10px 0px 10px 0px
+      margin: 10px 0px 10px 0px;
     }
   `,
 })
@@ -248,24 +311,37 @@ export class DynamicFormFieldObject implements OnInit {
 
   formGroup!: FormGroup<object>;
   formfieldObject!: FormfieldObject;
-  isShowFormFieldShowen!: boolean;
+  showFormField!: boolean;
 
   ngOnInit(): void {
-    this.isShowFormFieldShowen = this.formfieldObject.required || this.expended;
-    this.setFormGroupState();
   }
 
   toggleShowFormField() {
-    this.isShowFormFieldShowen = !this.isShowFormFieldShowen;
-    this.setFormGroupState();
+    if (this.isFormFieldShowen()) {
+      this.showFormField = false;
+    } else {
+      this.showFormField = true;
+    }
   }
 
-  setFormGroupState() {
-    if (!this.isShowFormFieldShowen) {
-      this.formGroup.disable();
-    } else {
+  isFormFieldShowen(): boolean {
+    const hasRequiredField = this.formfieldObject.required;
+    const hasVisibleField = this.showFormField;
+    const hasSingleEmptyField =
+      this.formfieldObject.formFields.length > 0 &&
+      this.formfieldObject.formFields[0] instanceof FormField &&
+      this.formfieldObject.formFields[0].value !== null;
+
+    const result = hasRequiredField || hasVisibleField || hasSingleEmptyField
+    if (result) {
       this.formGroup.enable();
+    } else {
+      this.formGroup.disable();
     }
+
+    this.showFormField = result;
+
+    return result;
   }
 
   isParentArray(): boolean {
@@ -293,33 +369,43 @@ export class DynamicFormFieldObject implements OnInit {
         <mat-card-subtitle>{{ formFieldArray.subtitle }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content class="card-content">
-        @if(isFormFieldShowen) { @for (formField of formFieldArray.formFields;
-        track formField; let index = $index) { @switch(formField.formFieldType)
-        { @case('FormFieldArray') {
-        <dyn-form-field-array
-          [dynFormField]="formField"
-          [dynFormGroup]="formArray.get(index.toString())"
-        ></dyn-form-field-array>
-        } @case ('FormfieldObject') {
-        <dyn-form-field-object
-          [dynFormField]="formField"
-          [dynFormGroup]="formArray.get(index.toString())"
-          [expended]="isFormFieldShowen"
-        ></dyn-form-field-object>
-        } @default {
-        <dyn-form-field
-          [dynFormField]="formField"
-          [dynFormControl]="formArray.get(index.toString())"
-        ></dyn-form-field>
-        } } } }
+        @if (isFormFieldShowen()) {
+          @for (
+            formField of formFieldArray.formFields;
+            track formField;
+            let index = $index
+          ) {
+            @switch (formField.formFieldType) {
+              @case ('FormFieldArray') {
+                <dyn-form-field-array
+                  [dynFormField]="formField"
+                  [dynFormGroup]="formArray.get(index.toString())"
+                ></dyn-form-field-array>
+              }
+              @case ('FormfieldObject') {
+                <dyn-form-field-object
+                  [dynFormField]="formField"
+                  [dynFormGroup]="formArray.get(index.toString())"
+                  [expended]="isFormFieldShowen()"
+                ></dyn-form-field-object>
+              }
+              @default {
+                <dyn-form-field
+                  [dynFormField]="formField"
+                  [dynFormControl]="formArray.get(index.toString())"
+                ></dyn-form-field>
+              }
+            }
+          }
+        }
       </mat-card-content>
       <mat-card-actions align="end">
         <button
           mat-icon-button
           (click)="removeFormField()"
           [disabled]="
-            (formFieldArray.formFieldModel.required && formArray.length <= 1) ||
-            !isFormFieldShowen
+            (formArray.length <= 1 && formFieldModel.required) ||
+            !isFormFieldShowen()
           "
         >
           <mat-icon>remove</mat-icon>
@@ -332,14 +418,14 @@ export class DynamicFormFieldObject implements OnInit {
   `,
   styles: `
     mat-card-header {
-      padding: 10px
+      padding: 10px;
     }
-    mat-card{
-      margin: 10px 0px 10px 0px
+    mat-card {
+      margin: 10px 0px 10px 0px;
     }
   `,
 })
-export class DynamicFormFieldArray implements OnInit {
+export class DynamicFormFieldArray implements OnInit, OnChanges {
   @Input()
   get dynFormField(): AbstractFormField {
     return this.formFieldArray;
@@ -357,76 +443,57 @@ export class DynamicFormFieldArray implements OnInit {
 
   formArray!: FormArray;
   formFieldArray!: FormFieldArray;
-  isFormFieldShowen!: boolean;
+  formFieldModel!: AbstractFormField;
+  showFormField!: boolean;
 
   ngOnInit() {
-    this.showFormField(
-      this.formFieldArray.formFieldModel.required ||
-        this.formFieldArray.formFields.length > 0
-    );
-    this.setFormGroupState();
+    this.formFieldModel = { ...this.formFieldArray.formFields[0] };
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
   }
 
   addFormField() {
-    if (this.isFormFieldShowen) {
-      this.formFieldArray.formFields.push(this.formFieldArray.formFieldModel);
+    if (this.isFormFieldShowen()) {
+      this.formFieldArray.formFields.push(this.formFieldModel);
       this.formArray.push(
-        FormGenerator.generateFormGroup([this.formFieldArray.formFieldModel]).get(this.formFieldArray.formFieldModel.name)
-        // this.cloneFormControl(
-        //   this.formArray.get('0') as AbstractControl<any, any>
-        // )
+        FormGenerator.generateFormGroup([
+          this.formFieldModel
+        ], true).get(this.formFieldModel.name),
       );
     } else {
-      this.showFormField(true);
+      this.showFormField = true;
     }
-    this.setFormGroupState();
   }
 
   removeFormField() {
-    if (this.formArray.length > 1) {
-      this.formArray.removeAt(this.formArray.length - 1);
-      this.formFieldArray.formFields.pop();
-      this.showFormField(true);
-    } else {
-      this.showFormField(this.formFieldArray.formFieldModel.required);
-    }
-    this.setFormGroupState();
+    // if (this.formFieldArray.formFields.length > 1) {
+    this.formFieldArray.formFields.pop();
+    this.formArray.removeAt(this.formArray.length - 1);
+    // } else {
+    //   this.showFormField = false;
+    // }
   }
 
-  setFormGroupState() {
-    if (this.isFormFieldShowen) {
+  isFormFieldShowen(): boolean {
+    const hasRequiredField = this.formFieldArray.required;
+    const hasVisibleField = this.showFormField;
+    const hasMultipleFields = this.formFieldArray.formFields.length > 1;
+    const hasSingleEmptyField =
+      this.formFieldArray.formFields.length === 1 &&
+      this.formFieldArray.formFields[0] instanceof FormField &&
+      this.formFieldArray.formFields[0].name === "" &&
+      this.formFieldArray.formFields[0].value === null;
+
+    const result = hasRequiredField || hasVisibleField || hasMultipleFields || !hasSingleEmptyField;
+    if (result) {
       this.formArray.enable();
     } else {
       this.formArray.disable();
     }
-  }
 
-  // cloneFormControl(
-  //   control: AbstractControl,
-  //   cloneValue: boolean = false
-  // ): AbstractControl {
-  //   if (control instanceof FormGroup) {
-  //     return this.cloneFormGroup(control);
-  //   } else if (control instanceof FormControl) {
-  //     return new FormControl(
-  //       cloneValue ? control.value : '',
-  //       control.validator
-  //     );
-  //   }
-  //   return control;
-  // }
+    this.showFormField = result;
 
-  // cloneFormGroup(group: FormGroup): FormGroup {
-  //   const clonedGroup: { [key: string]: AbstractControl } = {};
-  //   Object.keys(group.controls).forEach((key) => {
-  //     const control = group.controls[key];
-  //     clonedGroup[key] = this.cloneFormControl(control);
-  //   });
-  //   return new FormGroup(clonedGroup);
-  // }
-
-  showFormField(value: boolean) {
-    this.isFormFieldShowen = value;
-    this.setFormGroupState();
+    return result;
   }
 }

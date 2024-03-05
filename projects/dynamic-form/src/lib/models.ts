@@ -1,8 +1,9 @@
 export abstract class AbstractFormField {
   abstract formFieldType: string;
+  disabled: boolean = false;
   name!: string;
-  title!: string;
   required: boolean = false;
+  title!: string;
 }
 
 export abstract class FormField<T> extends AbstractFormField {
@@ -13,26 +14,42 @@ export abstract class FormField<T> extends AbstractFormField {
   value!: T;
 }
 
+export type FormFieldValue = {
+  formfieldName: string;
+  formfieldValue: string;
+};
+
 export class FormFieldArray extends AbstractFormField {
+  distinct: boolean = false;
+  formFields!: AbstractFormField[];
   formFieldType = 'FormFieldArray';
   subtitle!: string;
-  formFieldModel!: AbstractFormField;
-  formFields: AbstractFormField[] = [];
-  distinct: boolean = false;
 
   constructor(data: {
-    name: string;
-    title: string;
-    subtitle?: string;
-    formFieldModel?: AbstractFormField;
-    formFields?: AbstractFormField[];
+    disabled?: boolean;
     distinct?: boolean;
+    formFields: AbstractFormField[];
+    name: string;
+    required?: boolean;
+    subtitle?: string;
+    title: string;
   }) {
     super();
     Object.assign(this, data);
-    // if (this.formFields.length == 0) {
-    //   this.formFields.push(this.formFieldModel);
-    // }
+  }
+}
+
+export class FormfieldLabel<T> extends FormField<T> {
+  formFieldType = 'FormfieldLabel';
+  constructor(data: {
+    disabled?: boolean;
+    hidden?: boolean;
+    name: string;
+    title: string;
+    value: T;
+  }) {
+    super();
+    Object.assign(this, data);
   }
 }
 
@@ -41,6 +58,7 @@ export class FormFieldInput<T = string> extends FormField<T> {
   type: string = 'text';
 
   constructor(data: {
+    disabled?: boolean;
     hidden?: boolean;
     hint?: string;
     icon?: string;
@@ -57,49 +75,48 @@ export class FormFieldInput<T = string> extends FormField<T> {
 }
 
 export class FormfieldObject extends AbstractFormField {
+  formFields!: FormField<unknown>[];
   formFieldType = 'FormfieldObject';
   subtitle!: string;
-  formFields!: FormField<unknown>[];
 
   constructor(data: {
-    name: string;
-    title: string;
-    subtitle?: string;
     formFields: FormField<unknown>[];
+    name: string;
     required?: boolean;
+    subtitle?: string;
+    title: string;
   }) {
     super();
     Object.assign(this, data);
   }
 }
 
-export interface Option {
-  value: string;
+export type Option<T = string> = {
+  value: T;
   viewValue: string;
-}
+};
 
-export interface FormFieldSelectOptionGroup {
+export type OptionGroup<T = string> = {
   disabled?: boolean;
   name: string;
-  options: Option[];
-}
+  options: Option<T>[];
+};
 
 export class FormFieldSelect<T = string> extends FormField<T> {
   formFieldType = 'FormFieldSelect';
-  options?: Option[];
-  optionGroups?: FormFieldSelectOptionGroup[];
-  optionNone?: boolean = true;
+  optionNone: boolean = true;
+  options?: Option<T>[] | OptionGroup<T>[];
 
   constructor(data: {
+    disabled?: boolean;
+    hidden?: boolean;
     hint?: string;
     icon?: string;
     name: string;
-    options?: Option[]; // Ignored if optionGroups is set
-    optionGroups?: FormFieldSelectOptionGroup[];
+    optionNone?: boolean;
+    options: Option<T>[] | OptionGroup<T>[];
     placeholder?: string;
     required?: boolean;
-    hidden?: boolean;
-    optionNone?: boolean;
     title?: string;
     value?: T;
   }) {
