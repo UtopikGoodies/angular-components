@@ -61,7 +61,7 @@ export interface DialogOutput<T> {
   }
 
   .content {
-    margin: 20px
+    margin: 20px 10px 10px 20px;
   }
   `,
 })
@@ -69,7 +69,7 @@ export class DynamicDialog {
   constructor(
     public dialogRef: MatDialogRef<DynamicDialog>,
     @Inject(MAT_DIALOG_DATA) public data: DialogData
-  ) {}
+  ) { }
 
   onClose() {
     this.dialogRef.close({ action: DialogAction.Close });
