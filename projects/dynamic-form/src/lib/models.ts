@@ -30,6 +30,7 @@ export class FormFieldArray extends AbstractFormField {
     distinct?: boolean;
     formFields: AbstractFormField[];
     name: string;
+    required?: boolean;
     subtitle?: string;
     title: string;
   }) {
